@@ -15,7 +15,8 @@
 					"source" : ".",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1
 					]
 				}
 			],
@@ -30,7 +31,8 @@
 					"name" : "Grizzly",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1
 					]
 				}
 			],
@@ -38,8 +40,15 @@
 			[
 				{
 					"directoryIndex" : 0,
+					"id" : "grizzly_app::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_app-Debug-3864fd39e9dd7ddc21c5.json",
+					"name" : "grizzly_app",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
 					"id" : "grizzly_core::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-grizzly_core-Debug-3df587899f9f09088469.json",
+					"jsonFile" : "target-grizzly_core-Debug-f44225825951ba6d77b3.json",
 					"name" : "grizzly_core",
 					"projectIndex" : 0
 				}

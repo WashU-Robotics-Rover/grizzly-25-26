@@ -49,12 +49,19 @@ cmake_ninja_workdir = /Users/danielhuinda/robotics/grizzly-25-26/cmake-build-deb
 
 build cmake_object_order_depends_target_grizzly_core: phony || .
 
-build CMakeFiles/grizzly_core.dir/src/grizzly/core/bus/scheduler.cpp.o: CXX_COMPILER__grizzly_core_unscanned_Debug /Users/danielhuinda/robotics/grizzly-25-26/src/grizzly/core/bus/scheduler.cpp || cmake_object_order_depends_target_grizzly_core
-  DEP_FILE = CMakeFiles/grizzly_core.dir/src/grizzly/core/bus/scheduler.cpp.o.d
-  FLAGS = -g -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -mmacosx-version-min=15.6 -fcolor-diagnostics
+build CMakeFiles/grizzly_core.dir/src/grizzly/core/runtime/scheduler.cpp.o: CXX_COMPILER__grizzly_core_unscanned_Debug /Users/danielhuinda/robotics/grizzly-25-26/src/grizzly/core/runtime/scheduler.cpp || cmake_object_order_depends_target_grizzly_core
+  DEP_FILE = CMakeFiles/grizzly_core.dir/src/grizzly/core/runtime/scheduler.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -mmacosx-version-min=15.6 -fcolor-diagnostics
   INCLUDES = -I/Users/danielhuinda/robotics/grizzly-25-26/include
   OBJECT_DIR = CMakeFiles/grizzly_core.dir
-  OBJECT_FILE_DIR = CMakeFiles/grizzly_core.dir/src/grizzly/core/bus
+  OBJECT_FILE_DIR = CMakeFiles/grizzly_core.dir/src/grizzly/core/runtime
+
+build CMakeFiles/grizzly_core.dir/src/grizzly/main.cpp.o: CXX_COMPILER__grizzly_core_unscanned_Debug /Users/danielhuinda/robotics/grizzly-25-26/src/grizzly/main.cpp || cmake_object_order_depends_target_grizzly_core
+  DEP_FILE = CMakeFiles/grizzly_core.dir/src/grizzly/main.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -mmacosx-version-min=15.6 -fcolor-diagnostics
+  INCLUDES = -I/Users/danielhuinda/robotics/grizzly-25-26/include
+  OBJECT_DIR = CMakeFiles/grizzly_core.dir
+  OBJECT_FILE_DIR = CMakeFiles/grizzly_core.dir/src/grizzly
 
 
 # =============================================================================
@@ -64,7 +71,7 @@ build CMakeFiles/grizzly_core.dir/src/grizzly/core/bus/scheduler.cpp.o: CXX_COMP
 #############################################
 # Link the static library libgrizzly_core.a
 
-build libgrizzly_core.a: CXX_STATIC_LIBRARY_LINKER__grizzly_core_Debug CMakeFiles/grizzly_core.dir/src/grizzly/core/bus/scheduler.cpp.o
+build libgrizzly_core.a: CXX_STATIC_LIBRARY_LINKER__grizzly_core_Debug CMakeFiles/grizzly_core.dir/src/grizzly/core/runtime/scheduler.cpp.o CMakeFiles/grizzly_core.dir/src/grizzly/main.cpp.o
   ARCH_FLAGS = -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -mmacosx-version-min=15.6
   LANGUAGE_COMPILE_FLAGS = -g
   OBJECT_DIR = CMakeFiles/grizzly_core.dir
@@ -72,6 +79,39 @@ build libgrizzly_core.a: CXX_STATIC_LIBRARY_LINKER__grizzly_core_Debug CMakeFile
   PRE_LINK = :
   TARGET_FILE = libgrizzly_core.a
   TARGET_PDB = grizzly_core.a.dbg
+
+# =============================================================================
+# Object build statements for EXECUTABLE target grizzly_app
+
+
+#############################################
+# Order-only phony target for grizzly_app
+
+build cmake_object_order_depends_target_grizzly_app: phony || cmake_object_order_depends_target_grizzly_core
+
+build CMakeFiles/grizzly_app.dir/src/grizzly/main.cpp.o: CXX_COMPILER__grizzly_app_unscanned_Debug /Users/danielhuinda/robotics/grizzly-25-26/src/grizzly/main.cpp || cmake_object_order_depends_target_grizzly_app
+  DEP_FILE = CMakeFiles/grizzly_app.dir/src/grizzly/main.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -mmacosx-version-min=15.6 -fcolor-diagnostics
+  INCLUDES = -I/Users/danielhuinda/robotics/grizzly-25-26/include
+  OBJECT_DIR = CMakeFiles/grizzly_app.dir
+  OBJECT_FILE_DIR = CMakeFiles/grizzly_app.dir/src/grizzly
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target grizzly_app
+
+
+#############################################
+# Link the executable grizzly_app
+
+build grizzly_app: CXX_EXECUTABLE_LINKER__grizzly_app_Debug CMakeFiles/grizzly_app.dir/src/grizzly/main.cpp.o | libgrizzly_core.a || libgrizzly_core.a
+  FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -mmacosx-version-min=15.6
+  LINK_LIBRARIES = libgrizzly_core.a
+  OBJECT_DIR = CMakeFiles/grizzly_app.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = grizzly_app
+  TARGET_PDB = grizzly_app.dbg
 
 
 #############################################
@@ -109,7 +149,7 @@ build grizzly_core: phony libgrizzly_core.a
 #############################################
 # Folder: /Users/danielhuinda/robotics/grizzly-25-26/cmake-build-debug
 
-build all: phony libgrizzly_core.a
+build all: phony libgrizzly_core.a grizzly_app
 
 # =============================================================================
 # Built-in targets
@@ -118,14 +158,14 @@ build all: phony libgrizzly_core.a
 #############################################
 # Re-run CMake if any of its inputs changed.
 
-build build.ninja: RERUN_CMAKE | /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeCXXInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeCommonLanguageInclude.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeGenericSystem.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeInitializeConfigs.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeLanguageInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeSystemSpecificInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeSystemSpecificInitialize.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/AppleClang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/CMakeCommonCompilerMacros.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/Clang.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/GNU.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-AppleClang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-Clang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-Clang.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Darwin-Initialize.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Darwin.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/UnixPaths.cmake /Users/danielhuinda/robotics/grizzly-25-26/CMakeLists.txt CMakeCache.txt CMakeFiles/3.29.6/CMakeCXXCompiler.cmake CMakeFiles/3.29.6/CMakeSystem.cmake
+build build.ninja: RERUN_CMAKE | /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeCXXInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeCommonLanguageInclude.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeGenericSystem.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeInitializeConfigs.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeLanguageInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeSystemSpecificInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeSystemSpecificInitialize.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CheckCXXSourceCompiles.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CheckIncludeFileCXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CheckLibraryExists.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/AppleClang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/CMakeCommonCompilerMacros.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/Clang.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/GNU.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindPackageHandleStandardArgs.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindPackageMessage.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindThreads.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Internal/CheckSourceCompiles.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-AppleClang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-Clang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-Clang.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Darwin-Initialize.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Darwin.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/UnixPaths.cmake /Users/danielhuinda/robotics/grizzly-25-26/CMakeLists.txt CMakeCache.txt CMakeFiles/3.29.6/CMakeCXXCompiler.cmake CMakeFiles/3.29.6/CMakeSystem.cmake
   pool = console
 
 
 #############################################
 # A missing CMake input file is not an error.
 
-build /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeCXXInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeCommonLanguageInclude.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeGenericSystem.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeInitializeConfigs.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeLanguageInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeSystemSpecificInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeSystemSpecificInitialize.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/AppleClang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/CMakeCommonCompilerMacros.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/Clang.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/GNU.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-AppleClang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-Clang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-Clang.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Darwin-Initialize.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Darwin.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/UnixPaths.cmake /Users/danielhuinda/robotics/grizzly-25-26/CMakeLists.txt CMakeCache.txt CMakeFiles/3.29.6/CMakeCXXCompiler.cmake CMakeFiles/3.29.6/CMakeSystem.cmake: phony
+build /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeCXXInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeCommonLanguageInclude.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeGenericSystem.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeInitializeConfigs.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeLanguageInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeSystemSpecificInformation.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CMakeSystemSpecificInitialize.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CheckCXXSourceCompiles.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CheckIncludeFileCXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/CheckLibraryExists.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/AppleClang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/CMakeCommonCompilerMacros.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/Clang.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Compiler/GNU.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindPackageHandleStandardArgs.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindPackageMessage.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindThreads.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Internal/CheckSourceCompiles.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-AppleClang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-Clang-CXX.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Apple-Clang.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Darwin-Initialize.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/Darwin.cmake /Users/danielhuinda/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Platform/UnixPaths.cmake /Users/danielhuinda/robotics/grizzly-25-26/CMakeLists.txt CMakeCache.txt CMakeFiles/3.29.6/CMakeCXXCompiler.cmake CMakeFiles/3.29.6/CMakeSystem.cmake: phony
 
 
 #############################################
