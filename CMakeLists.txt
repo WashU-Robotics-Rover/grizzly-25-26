@@ -1,22 +1,20 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Project name and version
-project(Grizzly)
+project(Grizzly VERSION 1.0 LANGUAGES CXX)
 
-# Set the C++ standard
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Add include directories
-include_directories(core/include)
+# Include directories
+include_directories(include)
 
 # Add source files
-file(GLOB_RECURSE SOURCES "core/src/*.cpp")
+add_library(grizzly_core
+        src/grizzly/core/bus/scheduler.cpp
+        include/grizzly/core/bus/scheduler.hpp
+)
 
-# Link libraries (if needed)
-# target_link_libraries(component_manager <library_name>)
-
-# Add an executable (if you have a main.cpp)
-add_executable(Grizzly core/src/main.cpp ${SOURCES}
-         core/src/main.cpp)
-# target_link_libraries(my_executable component_manager)
+# Specify include directories for the library
+target_include_directories(grizzly_core PUBLIC include)
