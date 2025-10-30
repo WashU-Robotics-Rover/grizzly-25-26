@@ -1,3 +1,0 @@
-system_manager:
-  ros__parameters:
-    health_rate_hz: 1.0
