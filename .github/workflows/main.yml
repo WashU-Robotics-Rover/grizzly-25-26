@@ -26,11 +26,11 @@ jobs:
         with:
           required-ros-distributions: humble
 
-      - name: Install dependencies via rosdep
-        run: |
-          sudo apt update
-          rosdep update
-          rosdep install --from-paths src --ignore-src -r -y
+      # - name: Install dependencies via rosdep
+      #   run: |
+      #     sudo apt update
+      #     rosdep update
+      #     rosdep install --from-paths src --ignore-src -r -y
 
       - name: Source ROS and build workspace
         run: |
