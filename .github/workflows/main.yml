@@ -27,7 +27,8 @@ jobs:
             build
             install
             log
-          key: ros2-humble-grizzly-${{ runner.os }}-${{ hashFiles('**/src/**', '**/package.xml', '**/CMakeLists.txt') }}
+          # IMPORTANT: pass multiple args to hashFiles, not one string with commas
+          key: ros2-humble-grizzly-${{ runner.os }}-${{ hashFiles('**/package.xml', '**/CMakeLists.txt', '**/src/**') || github.sha }}
           restore-keys: |
             ros2-humble-grizzly-${{ runner.os }}-
 
@@ -36,7 +37,6 @@ jobs:
         with:
           required-ros-distributions: humble
 
-      # Optional dependency installation
       # - name: Install dependencies via rosdep
       #   run: |
       #     sudo apt update
@@ -52,7 +52,6 @@ jobs:
         run: |
           source install/setup.bash
 
-      # Optional test phase
       # - name: Run colcon tests
       #   run: |
       #     colcon test --event-handlers console_direct+
