@@ -20,14 +20,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Utilities needed below
       - name: Install helper tools
         run: |
+          set -euo pipefail
           apt-get update
-          apt-get install -y --no-install-recommends jq rsync perl
+          apt-get install -y --no-install-recommends jq rsync
           rm -rf /var/lib/apt/lists/*
 
-      # Optional: inside ros:humble this is not strictly required, but ok to keep
+      # Optional inside ros:humble; okay to keep
       - name: Set up ROS 2 Humble build tools
         uses: ros-tooling/setup-ros@v0.7
         with:
@@ -41,49 +41,60 @@ jobs:
 
       - name: Build workspace
         run: |
+          set -euo pipefail
           source /opt/ros/humble/setup.bash
           colcon build --symlink-install
 
-      # Make the generated setup portable across environments (Linux apt, RoboStack/mac, etc.)
+      # Make the generated setup portable without YAML-unfriendly quoting
       - name: Make setup portable
         run: |
           set -euo pipefail
-          SETUP=install/setup.bash
+          SETUP="install/setup.bash"
 
-          # (1) Silence "not found" messages from the helper so missing underlays don't spam users
-          perl -0777 -pe 's/echo "not found: \\"\\$1\\"" 1>&2/:\ # suppressed/g' -i "$SETUP"
+          # (1) Silence "not found" messages in _colcon_prefix_chain_bash_source_script
+          #     Exact line in template: echo "not found: \"$1\"" 1>&2
+          sed -i 's/echo "not found: \"\$1\"" 1>&2/: # suppressed/' "$SETUP"
 
-          # (2) Replace hardcoded /opt/ros/humble underlay with optional $ROS_UNDERLAY if provided
-          perl -0777 -pe '
-            s/COLCON_CURRENT_PREFIX="\/opt\/ros\/humble"\n_colcon_prefix_chain_bash_source_script "\$COLCON_CURRENT_PREFIX\/local_setup\.bash"/\
-# Optional underlay: set ROS_UNDERLAY to a prefix that has local_setup.bash (e.g., RoboStack on mac)\n\
-if [ -n "\${ROS_UNDERLAY:-}" ] \&\& [ -f "\$ROS_UNDERLAY\/local_setup.bash" ]; then\n\
-  COLCON_CURRENT_PREFIX="\$ROS_UNDERLAY"\n\
-  _colcon_prefix_chain_bash_source_script "\$COLCON_CURRENT_PREFIX\/local_setup.bash"\n\
-fi/
-          ' -i "$SETUP"
+          # (2) Replace hardcoded /opt/ros/humble underlay with optional $ROS_UNDERLAY block
+          #     We detect the specific two-line sequence and output a conditional block instead.
+          awk '
+            BEGIN { skip_next = 0 }
+            {
+              if (skip_next) { skip_next = 0; next }
+              if ($0 ~ /^COLCON_CURRENT_PREFIX="\/opt\/ros\/humble"$/) {
+                skip_next = 1
+                print "# Optional underlay: set ROS_UNDERLAY to a prefix that has local_setup.bash (e.g., RoboStack on mac)"
+                print "if [ -n \"${ROS_UNDERLAY:-}\" ] && [ -f \"$ROS_UNDERLAY/local_setup.bash\" ]; then"
+                print "  COLCON_CURRENT_PREFIX=\"$ROS_UNDERLAY\""
+                print "  _colcon_prefix_chain_bash_source_script \"$COLCON_CURRENT_PREFIX/local_setup.bash\""
+                print "fi"
+              } else {
+                print
+              }
+            }
+          ' "$SETUP" > "$SETUP.tmp"
+          mv "$SETUP.tmp" "$SETUP"
 
       - name: Prepare release artifacts
         id: prep
         run: |
-          set -e -o pipefail  # note: no -u here to avoid nounset issues
+          set -e -o pipefail  # no -u here (some env files reference unset vars)
 
-          # Version info (semver if tagging; otherwise date+shortsha)
           SHORT_SHA="${GITHUB_SHA::7}"
           BUILD_DATE="$(date -u +%Y%m%d%H%M%S)"
           VERSION="${BUILD_DATE}-${SHORT_SHA}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-          # Stage a copy of install so tarball paths are clean
+          # Stage clean paths
           mkdir -p out
           rsync -a --delete install/ out/install/
 
-          # Write version metadata
+          # Version metadata
           echo "${VERSION}" > out/install/VERSION
           jq -n --arg version "$VERSION" --arg sha "$GITHUB_SHA" --arg date "$BUILD_DATE" \
             '{version:$version, commit:$sha, built_at_utc:$date, distro:"humble"}' > out/version.json
 
-          # Tar and checksums
+          # Tarball + checksum
           TAR="grizzly-install-${VERSION}.tar.gz"
           (cd out && tar -czf "../${TAR}" install version.json)
           sha256sum "${TAR}" > "SHA256SUMS"
