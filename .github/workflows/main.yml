@@ -25,12 +25,6 @@ jobs:
         with:
           required-ros-distributions: humble
 
-      # - name: Install dependencies via rosdep
-      #   run: |
-      #     sudo apt update
-      #     rosdep update
-      #     rosdep install --from-paths src --ignore-src -r -y
-
       - name: Build workspace
         run: |
           source /opt/ros/humble/setup.bash
@@ -50,3 +44,11 @@ jobs:
           source install/setup.bash
           source install/local_setup.bash
           ros2 run grizzly test_node
+
+  release:
+    needs: build_and_test
+    # Only release on *push* to main/master (skip PRs)
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+    uses: ./.github/workflows/release.yml
+    with:
+      build_sha: ${{ github.sha }}
