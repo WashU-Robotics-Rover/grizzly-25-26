@@ -20,18 +20,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache ROS 2 build/install artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            build
-            install
-            log
-          # IMPORTANT: pass multiple args to hashFiles, not one string with commas
-          key: ros2-humble-grizzly-${{ runner.os }}-${{ hashFiles('**/package.xml', '**/CMakeLists.txt', '**/src/**') || github.sha }}
-          restore-keys: |
-            ros2-humble-grizzly-${{ runner.os }}-
-
       - name: Set up ROS 2 Humble build tools
         uses: ros-tooling/setup-ros@v0.7
         with:
@@ -52,10 +40,10 @@ jobs:
         run: |
           source install/setup.bash
 
-      # - name: Run colcon tests
-      #   run: |
-      #     colcon test --event-handlers console_direct+
-      #     colcon test-result --verbose
+      - name: Run colcon tests
+        run: |
+          colcon test --event-handlers console_direct+
+          colcon test-result --verbose
 
       - name: Run test_node from grizzly package
         run: |
