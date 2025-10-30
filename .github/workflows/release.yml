@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build_release:
     runs-on: ubuntu-22.04
@@ -17,6 +20,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Utilities needed below
+      - name: Install helper tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends jq rsync
+          rm -rf /var/lib/apt/lists/*
+
+      # Optional: setup-ros is not strictly needed inside ros:humble,
+      # but harmless. Keep if you want rosdep keys and friends.
       - name: Set up ROS 2 Humble build tools
         uses: ros-tooling/setup-ros@v0.7
         with:
@@ -24,7 +36,7 @@ jobs:
 
       # - name: Install dependencies via rosdep
       #   run: |
-      #     sudo apt update
+      #     apt-get update
       #     rosdep update
       #     rosdep install --from-paths src --ignore-src -r -y
 
@@ -36,11 +48,15 @@ jobs:
       - name: Prepare release artifacts
         id: prep
         run: |
-          set -euo pipefail
-          source install/setup.bash
-          source install/local_setup.bash
+          set -e -o pipefail  # note: no -u here to avoid nounset issues
 
-          # Version info (semver if you tag; otherwise date+shortsha)
+          # Safely source colcon environment (disable nounset while sourcing)
+          set +u
+          [ -f install/setup.bash ] && source install/setup.bash
+          [ -f install/local_setup.bash ] && source install/local_setup.bash
+          set -u
+
+          # Version info (semver if tagging; otherwise date+shortsha)
           SHORT_SHA="${GITHUB_SHA::7}"
           BUILD_DATE="$(date -u +%Y%m%d%H%M%S)"
           VERSION="${BUILD_DATE}-${SHORT_SHA}"
