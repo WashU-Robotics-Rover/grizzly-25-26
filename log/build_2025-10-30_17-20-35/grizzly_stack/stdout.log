@@ -1,0 +1,24 @@
+running egg_info
+writing ../build/grizzly_stack/grizzly_stack.egg-info/PKG-INFO
+writing dependency_links to ../build/grizzly_stack/grizzly_stack.egg-info/dependency_links.txt
+writing entry points to ../build/grizzly_stack/grizzly_stack.egg-info/entry_points.txt
+writing requirements to ../build/grizzly_stack/grizzly_stack.egg-info/requires.txt
+writing top-level names to ../build/grizzly_stack/grizzly_stack.egg-info/top_level.txt
+reading manifest file '../build/grizzly_stack/grizzly_stack.egg-info/SOURCES.txt'
+writing manifest file '../build/grizzly_stack/grizzly_stack.egg-info/SOURCES.txt'
+running build
+running build_py
+copying core/__init__.py -> /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_stack/build/lib/core
+copying core/system_manager.py -> /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_stack/build/lib/core
+copying launch/grizzly_minimal.launch.py -> /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_stack/build/lib/launch
+copying launch/__init__.py -> /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_stack/build/lib/launch
+running install
+running install_lib
+copying /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_stack/build/lib/launch/grizzly_minimal.launch.py -> /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_stack/lib/python3.11/site-packages/launch
+byte-compiling /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_stack/lib/python3.11/site-packages/launch/grizzly_minimal.launch.py to grizzly_minimal.launch.cpython-311.pyc
+running install_data
+copying resource/grizzly_stack -> /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_stack/share/ament_index/resource_index/packages
+copying package.xml -> /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_stack/share/grizzly_stack
+copying launch/grizzly_minimal.launch.py -> /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_stack/share/grizzly_stack/launch
+creating /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_stack/share/grizzly_stack/config
+copying config/core.yaml -> /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_stack/share/grizzly_stack/config

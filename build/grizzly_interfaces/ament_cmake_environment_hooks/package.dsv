@@ -1,0 +1,4 @@
+source;share/grizzly_interfaces/local_setup.bash
+source;share/grizzly_interfaces/local_setup.dsv
+source;share/grizzly_interfaces/local_setup.sh
+source;share/grizzly_interfaces/local_setup.zsh

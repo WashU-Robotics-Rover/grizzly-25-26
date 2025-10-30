@@ -1,0 +1,54 @@
+{
+	"cmake" : 
+	{
+		"generator" : 
+		{
+			"multiConfig" : false,
+			"name" : "Unix Makefiles"
+		},
+		"paths" : 
+		{
+			"cmake" : "/opt/anaconda3/envs/ros_env/bin/cmake",
+			"cpack" : "/opt/anaconda3/envs/ros_env/bin/cpack",
+			"ctest" : "/opt/anaconda3/envs/ros_env/bin/ctest",
+			"root" : "/opt/anaconda3/envs/ros_env/share/cmake-4.1"
+		},
+		"version" : 
+		{
+			"isDirty" : false,
+			"major" : 4,
+			"minor" : 1,
+			"patch" : 2,
+			"string" : "4.1.2",
+			"suffix" : ""
+		}
+	},
+	"objects" : 
+	[
+		{
+			"jsonFile" : "codemodel-v2-884d258d6a41434a3718.json",
+			"kind" : "codemodel",
+			"version" : 
+			{
+				"major" : 2,
+				"minor" : 8
+			}
+		}
+	],
+	"reply" : 
+	{
+		"client-colcon-cmake" : 
+		{
+			"codemodel-v2" : 
+			{
+				"jsonFile" : "codemodel-v2-884d258d6a41434a3718.json",
+				"kind" : "codemodel",
+				"version" : 
+				{
+					"major" : 2,
+					"minor" : 8
+				}
+			}
+		}
+	}
+}

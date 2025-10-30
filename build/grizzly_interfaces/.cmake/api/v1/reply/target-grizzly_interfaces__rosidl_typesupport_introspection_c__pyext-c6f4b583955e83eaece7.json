@@ -1,0 +1,830 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "rosidl_generator_py/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_introspection_c.cpython-311-darwin.so"
+		}
+	],
+	"backtrace" : 5,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"include",
+			"ament_execute_extensions",
+			"rosidl_generate_interfaces",
+			"install",
+			"target_link_libraries",
+			"ament_target_dependencies",
+			"set_target_properties",
+			"find_package",
+			"add_dependencies",
+			"set_properties",
+			"add_definitions",
+			"target_include_directories"
+		],
+		"files" : 
+		[
+			"/opt/anaconda3/envs/ros_env/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake",
+			"/opt/anaconda3/envs/ros_env/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake",
+			"/opt/anaconda3/envs/ros_env/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake",
+			"CMakeLists.txt",
+			"/opt/anaconda3/envs/ros_env/share/ament_cmake_target_dependencies/cmake/ament_target_dependencies.cmake",
+			"/opt/anaconda3/envs/ros_env/share/rosidl_typesupport_introspection_c/cmake/rosidl_typesupport_introspection_c_generate_interfaces.cmake",
+			"/opt/anaconda3/envs/ros_env/share/std_msgs/cmake/export_std_msgs__rosidl_typesupport_fastrtps_cExport.cmake",
+			"/opt/anaconda3/envs/ros_env/share/std_msgs/cmake/ament_cmake_export_targets-extras.cmake",
+			"/opt/anaconda3/envs/ros_env/share/std_msgs/cmake/std_msgsConfig.cmake",
+			"/opt/anaconda3/envs/ros_env/share/std_msgs/cmake/export_std_msgs__rosidl_typesupport_fastrtps_cppExport.cmake",
+			"/opt/anaconda3/envs/ros_env/share/std_msgs/cmake/std_msgs__rosidl_typesupport_introspection_cppExport.cmake",
+			"/opt/anaconda3/envs/ros_env/share/ament_cmake_ros/cmake/ament_cmake_ros-extras.cmake",
+			"/opt/anaconda3/envs/ros_env/share/ament_cmake_ros/cmake/ament_cmake_rosConfig.cmake",
+			"/opt/anaconda3/envs/ros_env/share/rosidl_typesupport_fastrtps_c/cmake/rosidl_typesupport_fastrtps_c_generate_interfaces.cmake"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 3
+			},
+			{
+				"command" : 3,
+				"file" : 3,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 286,
+				"parent" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 48,
+				"parent" : 2
+			},
+			{
+				"file" : 0,
+				"parent" : 3
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 4
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 271,
+				"parent" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 234,
+				"parent" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 248,
+				"parent" : 4
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 257,
+				"parent" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 145,
+				"parent" : 9
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 265,
+				"parent" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 151,
+				"parent" : 11
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 257,
+				"parent" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 145,
+				"parent" : 13
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 257,
+				"parent" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 145,
+				"parent" : 15
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 257,
+				"parent" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 145,
+				"parent" : 17
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 48,
+				"parent" : 2
+			},
+			{
+				"file" : 5,
+				"parent" : 19
+			},
+			{
+				"command" : 5,
+				"file" : 5,
+				"line" : 122,
+				"parent" : 20
+			},
+			{
+				"command" : 8,
+				"file" : 3,
+				"line" : 6,
+				"parent" : 0
+			},
+			{
+				"file" : 8,
+				"parent" : 22
+			},
+			{
+				"command" : 1,
+				"file" : 8,
+				"line" : 41,
+				"parent" : 23
+			},
+			{
+				"file" : 7,
+				"parent" : 24
+			},
+			{
+				"command" : 1,
+				"file" : 7,
+				"line" : 9,
+				"parent" : 25
+			},
+			{
+				"file" : 6,
+				"parent" : 26
+			},
+			{
+				"command" : 7,
+				"file" : 6,
+				"line" : 61,
+				"parent" : 27
+			},
+			{
+				"command" : 1,
+				"file" : 7,
+				"line" : 9,
+				"parent" : 25
+			},
+			{
+				"file" : 9,
+				"parent" : 29
+			},
+			{
+				"command" : 7,
+				"file" : 9,
+				"line" : 61,
+				"parent" : 30
+			},
+			{
+				"command" : 1,
+				"file" : 7,
+				"line" : 9,
+				"parent" : 25
+			},
+			{
+				"file" : 10,
+				"parent" : 32
+			},
+			{
+				"command" : 7,
+				"file" : 10,
+				"line" : 61,
+				"parent" : 33
+			},
+			{
+				"command" : 5,
+				"file" : 5,
+				"line" : 125,
+				"parent" : 20
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 250,
+				"parent" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 145,
+				"parent" : 36
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 262,
+				"parent" : 4
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 217,
+				"parent" : 4
+			},
+			{
+				"command" : 10,
+				"file" : 0,
+				"line" : 227,
+				"parent" : 4
+			},
+			{
+				"command" : 7,
+				"file" : 0,
+				"line" : 158,
+				"parent" : 40
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 48,
+				"parent" : 2
+			},
+			{
+				"file" : 13,
+				"parent" : 42
+			},
+			{
+				"command" : 8,
+				"file" : 13,
+				"line" : 21,
+				"parent" : 43
+			},
+			{
+				"file" : 12,
+				"parent" : 44
+			},
+			{
+				"command" : 1,
+				"file" : 12,
+				"line" : 41,
+				"parent" : 45
+			},
+			{
+				"file" : 11,
+				"parent" : 46
+			},
+			{
+				"command" : 11,
+				"file" : 11,
+				"line" : 25,
+				"parent" : 47
+			},
+			{
+				"command" : 12,
+				"file" : 0,
+				"line" : 242,
+				"parent" : 4
+			},
+			{
+				"command" : 12,
+				"file" : 4,
+				"line" : 141,
+				"parent" : 36
+			},
+			{
+				"command" : 12,
+				"file" : 4,
+				"line" : 141,
+				"parent" : 15
+			},
+			{
+				"command" : 12,
+				"file" : 4,
+				"line" : 141,
+				"parent" : 17
+			},
+			{
+				"command" : 12,
+				"file" : 4,
+				"line" : 141,
+				"parent" : 13
+			},
+			{
+				"command" : 12,
+				"file" : 4,
+				"line" : 141,
+				"parent" : 9
+			},
+			{
+				"command" : 12,
+				"file" : 4,
+				"line" : 147,
+				"parent" : 11
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -arch arm64 -fPIC"
+				},
+				{
+					"backtrace" : 41,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 41,
+					"fragment" : "-Wextra"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 48,
+					"define" : "ROS_PACKAGE_NAME=\"grizzly_interfaces\""
+				},
+				{
+					"define" : "grizzly_interfaces__rosidl_typesupport_introspection_c__pyext_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 49,
+					"path" : "/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces/rosidl_generator_c"
+				},
+				{
+					"backtrace" : 49,
+					"path" : "/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces/rosidl_generator_py"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces/rosidl_typesupport_introspection_c"
+				},
+				{
+					"backtrace" : 50,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rosidl_runtime_c"
+				},
+				{
+					"backtrace" : 50,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rosidl_typesupport_c"
+				},
+				{
+					"backtrace" : 50,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rosidl_typesupport_interface"
+				},
+				{
+					"backtrace" : 51,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/std_msgs"
+				},
+				{
+					"backtrace" : 51,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/python3.11"
+				},
+				{
+					"backtrace" : 51,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/lib/python3.11/site-packages/numpy/core/include"
+				},
+				{
+					"backtrace" : 52,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/builtin_interfaces"
+				},
+				{
+					"backtrace" : 53,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/geometry_msgs"
+				},
+				{
+					"backtrace" : 54,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/nav_msgs"
+				},
+				{
+					"backtrace" : 55,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rmw"
+				},
+				{
+					"backtrace" : 7,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rcutils"
+				},
+				{
+					"backtrace" : 7,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rosidl_typesupport_introspection_c"
+				},
+				{
+					"backtrace" : 16,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include"
+				},
+				{
+					"backtrace" : 16,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rosidl_runtime_cpp"
+				},
+				{
+					"backtrace" : 16,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rosidl_typesupport_fastrtps_cpp"
+				},
+				{
+					"backtrace" : 16,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rosidl_typesupport_fastrtps_c"
+				},
+				{
+					"backtrace" : 16,
+					"isSystem" : true,
+					"path" : "/opt/anaconda3/envs/ros_env/include/rosidl_typesupport_introspection_cpp"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 7,
+			"id" : "grizzly_interfaces__rosidl_generator_c::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 38,
+			"id" : "grizzly_interfaces__rosidl_typesupport_introspection_c::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 39,
+			"id" : "grizzly_interfaces__rosidl_typesupport_c::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 7,
+			"id" : "grizzly_interfaces__rosidl_generator_py::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 39,
+			"id" : "grizzly_interfaces__py::@2cd6b581abe4e2077909"
+		}
+	],
+	"id" : "grizzly_interfaces__rosidl_typesupport_introspection_c__pyext::@6890427a1f51a3e7e1df",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 6,
+				"path" : "lib/python3.11/site-packages/grizzly_interfaces"
+			},
+			{
+				"backtrace" : 6,
+				"path" : "lib/python3.11/site-packages/grizzly_interfaces"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-dynamiclib -Wl,-headerpad_max_install_names",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "-Xlinker",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "-undefined",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "-Xlinker",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "dynamic_lookup",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces/rosidl_generator_py/grizzly_interfaces -Wl,-rpath,/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces -Wl,-rpath,/opt/anaconda3/envs/ros_env/lib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "rosidl_generator_py/grizzly_interfaces/libgrizzly_interfaces__rosidl_generator_py.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "libgrizzly_interfaces__rosidl_typesupport_introspection_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 8,
+				"fragment" : "libgrizzly_interfaces__rosidl_typesupport_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 10,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libnav_msgs__rosidl_typesupport_fastrtps_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 10,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libnav_msgs__rosidl_typesupport_fastrtps_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 10,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libnav_msgs__rosidl_typesupport_introspection_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 10,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libnav_msgs__rosidl_typesupport_introspection_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 10,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libnav_msgs__rosidl_typesupport_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 10,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libnav_msgs__rosidl_generator_py.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 12,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/librmw.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 14,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libgeometry_msgs__rosidl_generator_py.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 16,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libstd_msgs__rosidl_generator_py.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libbuiltin_interfaces__rosidl_generator_py.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 10,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libnav_msgs__rosidl_typesupport_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 14,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libgeometry_msgs__rosidl_typesupport_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 16,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libstd_msgs__rosidl_typesupport_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libbuiltin_interfaces__rosidl_typesupport_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 14,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libgeometry_msgs__rosidl_typesupport_introspection_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 16,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libstd_msgs__rosidl_typesupport_introspection_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libbuiltin_interfaces__rosidl_typesupport_introspection_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 21,
+				"fragment" : "libgrizzly_interfaces__rosidl_generator_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 14,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libgeometry_msgs__rosidl_typesupport_fastrtps_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 16,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libstd_msgs__rosidl_typesupport_fastrtps_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libbuiltin_interfaces__rosidl_typesupport_fastrtps_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 10,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libnav_msgs__rosidl_generator_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 14,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libgeometry_msgs__rosidl_generator_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 16,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libstd_msgs__rosidl_generator_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libbuiltin_interfaces__rosidl_generator_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 28,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/librosidl_typesupport_fastrtps_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 14,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libgeometry_msgs__rosidl_typesupport_fastrtps_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 16,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libstd_msgs__rosidl_typesupport_fastrtps_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libbuiltin_interfaces__rosidl_typesupport_fastrtps_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 28,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/librosidl_typesupport_fastrtps_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 28,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libfastcdr.1.0.24.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 31,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/librmw.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 14,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libgeometry_msgs__rosidl_typesupport_introspection_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 16,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libstd_msgs__rosidl_typesupport_introspection_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libbuiltin_interfaces__rosidl_typesupport_introspection_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 34,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/librosidl_typesupport_introspection_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 35,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/librosidl_typesupport_introspection_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 14,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libgeometry_msgs__rosidl_typesupport_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 16,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libstd_msgs__rosidl_typesupport_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/libbuiltin_interfaces__rosidl_typesupport_cpp.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 37,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/librosidl_typesupport_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 37,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/librosidl_runtime_c.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 12,
+				"fragment" : "/opt/anaconda3/envs/ros_env/lib/librcutils.dylib",
+				"role" : "libraries"
+			}
+		],
+		"language" : "C"
+	},
+	"name" : "grizzly_interfaces__rosidl_typesupport_introspection_c__pyext",
+	"nameOnDisk" : "grizzly_interfaces_s__rosidl_typesupport_introspection_c.cpython-311-darwin.so",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"isGenerated" : true,
+			"path" : "/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces/rosidl_generator_py/grizzly_interfaces/_grizzly_interfaces_s.ep.rosidl_typesupport_introspection_c.c",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

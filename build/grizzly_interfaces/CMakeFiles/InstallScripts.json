@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces/cmake_install.cmake",
+		"/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces/grizzly_interfaces__py/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

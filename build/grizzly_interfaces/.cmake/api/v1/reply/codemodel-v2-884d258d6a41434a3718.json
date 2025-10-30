@@ -1,0 +1,233 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-1801ea07e2529c9e323f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17
+					]
+				},
+				{
+					"build" : "grizzly_interfaces__py",
+					"jsonFile" : "directory-grizzly_interfaces__py-a16df1ede39c14473d89.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces/grizzly_interfaces__py",
+					"targetIndexes" : 
+					[
+						4
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1
+					],
+					"name" : "grizzly_interfaces",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_build_grizzly_interfaces_egg::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_build_grizzly_interfaces_egg-cca8cfa81a3c9692c87d.json",
+					"name" : "ament_cmake_python_build_grizzly_interfaces_egg",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_copy_grizzly_interfaces::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_copy_grizzly_interfaces-4f3ded68317da380a17f.json",
+					"name" : "ament_cmake_python_copy_grizzly_interfaces",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces-f274ce672f6dad90b067.json",
+					"name" : "grizzly_interfaces",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__cpp-c8aa7a87c32207a7f822.json",
+					"name" : "grizzly_interfaces__cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "grizzly_interfaces__py::@2cd6b581abe4e2077909",
+					"jsonFile" : "target-grizzly_interfaces__py-d8fecc531861a000b327.json",
+					"name" : "grizzly_interfaces__py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_generator_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_generator_c-681b5e92fc2f7cd90821.json",
+					"name" : "grizzly_interfaces__rosidl_generator_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_generator_py::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_generator_py-ff8d675c0b52b7100536.json",
+					"name" : "grizzly_interfaces__rosidl_generator_py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_typesupport_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_typesupport_c-bc16247999455afceb80.json",
+					"name" : "grizzly_interfaces__rosidl_typesupport_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_typesupport_c__pyext::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_typesupport_c__pyext-fef79dd5f1a670bafc05.json",
+					"name" : "grizzly_interfaces__rosidl_typesupport_c__pyext",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_typesupport_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_typesupport_cpp-1365268bcdfb01ae3411.json",
+					"name" : "grizzly_interfaces__rosidl_typesupport_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_typesupport_fastrtps_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_typesupport_fastrtps_c-67f1a63894fdaa5f23be.json",
+					"name" : "grizzly_interfaces__rosidl_typesupport_fastrtps_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_typesupport_fastrtps_c__pyext::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_typesupport_fastrtps_c__pyext-69366cdac550317d1794.json",
+					"name" : "grizzly_interfaces__rosidl_typesupport_fastrtps_c__pyext",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_typesupport_fastrtps_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_typesupport_fastrtps_cpp-e8da61e092c530aab303.json",
+					"name" : "grizzly_interfaces__rosidl_typesupport_fastrtps_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_typesupport_introspection_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_typesupport_introspection_c-7fd77f7a1f47cb5d69a0.json",
+					"name" : "grizzly_interfaces__rosidl_typesupport_introspection_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_typesupport_introspection_c__pyext::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_typesupport_introspection_c__pyext-c6f4b583955e83eaece7.json",
+					"name" : "grizzly_interfaces__rosidl_typesupport_introspection_c__pyext",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces__rosidl_typesupport_introspection_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces__rosidl_typesupport_introspection_cpp-9bbaf250a6ad3c28dae5.json",
+					"name" : "grizzly_interfaces__rosidl_typesupport_introspection_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "grizzly_interfaces_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-grizzly_interfaces_uninstall-c012602718cd4ba1ed0b.json",
+					"name" : "grizzly_interfaces_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-e13a66f9fdfa7d4a608b.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces",
+		"source" : "/Users/danielhuinda/robotics/grizzly-25-26/grizzly_interfaces"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 8
+	}
+}

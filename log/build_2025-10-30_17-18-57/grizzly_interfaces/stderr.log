@@ -1,0 +1,23 @@
+CMake Error at /opt/anaconda3/envs/ros_env/share/python_cmake_module/cmake/Modules/FindPythonExtra.cmake:52 (find_package):
+  By not providing "FindPythonInterp.cmake" in CMAKE_MODULE_PATH this project
+  has asked CMake to find a package configuration file provided by
+  "PythonInterp", but CMake did not find one.
+
+  Could not find a package configuration file provided by "PythonInterp"
+  (requested version 3.6) with any of the following names:
+
+    PythonInterpConfig.cmake
+    pythoninterp-config.cmake
+
+  Add the installation prefix of "PythonInterp" to CMAKE_PREFIX_PATH or set
+  "PythonInterp_DIR" to a directory containing one of the above files.  If
+  "PythonInterp" provides a separate development package or SDK, be sure it
+  has been installed.
+Call Stack (most recent call first):
+  /opt/anaconda3/envs/ros_env/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:33 (find_package)
+  /opt/anaconda3/envs/ros_env/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)
+  /opt/anaconda3/envs/ros_env/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)
+  CMakeLists.txt:11 (rosidl_generate_interfaces)
+
+
+make: *** [Makefile:747: cmake_check_build_system] Error 1

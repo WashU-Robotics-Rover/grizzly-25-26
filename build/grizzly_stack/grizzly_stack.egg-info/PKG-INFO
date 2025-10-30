@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: grizzly_stack
+Version: 0.1.0
+Summary: Core+Perception+Planning+Control+Telemetry in one package.
+Author: WashU Rover Team
+Author-email: you@washu.edu
+License: MIT
+Requires-Dist: setuptools
+Dynamic: author
+Dynamic: author-email
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: summary

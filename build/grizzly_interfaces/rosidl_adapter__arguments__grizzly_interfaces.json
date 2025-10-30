@@ -1,0 +1,6 @@
+{
+  "package_name": "grizzly_interfaces",
+  "non_idl_tuples": [
+    "/Users/danielhuinda/robotics/grizzly-25-26/grizzly_interfaces:msg/PerceptionState.msg"
+  ]
+}

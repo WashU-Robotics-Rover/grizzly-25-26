@@ -1,0 +1,260 @@
+[0.021s] Invoking command in '/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces': CMAKE_PREFIX_PATH=/opt/anaconda3/envs/ros_env CONDA_PROMPT_MODIFIER=(base) SHLVL=2 _=/opt/anaconda3/envs/ros_env/bin/env /opt/anaconda3/envs/ros_env/bin/cmake /Users/danielhuinda/robotics/grizzly-25-26/grizzly_interfaces -DPython_EXECUTABLE=/opt/anaconda3/envs/ros_env/bin/python -DPython3_EXECUTABLE=/opt/anaconda3/envs/ros_env/bin/python -DPython_INCLUDE_DIR=/opt/anaconda3/envs/ros_env/include/python3.11 -DPython3_INCLUDE_DIR=/opt/anaconda3/envs/ros_env/include/python3.11 -DPython_LIBRARY=/opt/anaconda3/envs/ros_env/lib/libpython3.11.dylib -DPython3_LIBRARY=/opt/anaconda3/envs/ros_env/lib/libpython3.11.dylib -DCMAKE_INSTALL_PREFIX=/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces
+[0.080s] CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+[0.080s]   Compatibility with CMake < 3.10 will be removed from a future version of
+[0.080s]   CMake.
+[0.081s] 
+[0.081s]   Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+[0.081s]   to tell CMake that the project requires at least <min> but has been updated
+[0.081s]   to work with policies introduced by <max> or earlier.
+[0.081s] 
+[0.081s] 
+[0.217s] -- The C compiler identification is AppleClang 17.0.0.17000319
+[0.319s] -- The CXX compiler identification is AppleClang 17.0.0.17000319
+[0.330s] -- Detecting C compiler ABI info
+[0.503s] -- Detecting C compiler ABI info - done
+[0.520s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.520s] -- Detecting C compile features
+[0.520s] -- Detecting C compile features - done
+[0.527s] -- Detecting CXX compiler ABI info
+[0.698s] -- Detecting CXX compiler ABI info - done
+[0.713s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.714s] -- Detecting CXX compile features
+[0.714s] -- Detecting CXX compile features - done
+[0.726s] -- Found ament_cmake: 1.3.12 (/opt/anaconda3/envs/ros_env/share/ament_cmake/cmake)
+[0.835s] -- Found Python3: /opt/anaconda3/envs/ros_env/bin/python (found version "3.11.14") found components: Interpreter
+[1.018s] -- Found rosidl_default_generators: 1.2.0 (/opt/anaconda3/envs/ros_env/share/rosidl_default_generators/cmake)
+[1.028s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.055s] -- Found rosidl_adapter: 3.1.6 (/opt/anaconda3/envs/ros_env/share/rosidl_adapter/cmake)
+[1.165s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.258s] -- Found std_msgs: 4.9.0 (/opt/anaconda3/envs/ros_env/share/std_msgs/cmake)
+[1.323s] -- Found geometry_msgs: 4.9.0 (/opt/anaconda3/envs/ros_env/share/geometry_msgs/cmake)
+[1.348s] -- Found nav_msgs: 4.9.0 (/opt/anaconda3/envs/ros_env/share/nav_msgs/cmake)
+[1.697s] -- Found ament_cmake_ros: 0.10.0 (/opt/anaconda3/envs/ros_env/share/ament_cmake_ros/cmake)
+[2.089s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[2.562s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[2.572s] -- Found python_cmake_module: 0.10.0 (/opt/anaconda3/envs/ros_env/share/python_cmake_module/cmake)
+[2.573s] CMake Warning (dev) at /opt/anaconda3/envs/ros_env/share/python_cmake_module/cmake/Modules/FindPythonExtra.cmake:52 (find_package):
+[2.573s]   Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+[2.573s]   are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+[2.573s]   the cmake_policy command to set the policy and suppress this warning.
+[2.573s] 
+[2.573s] Call Stack (most recent call first):
+[2.573s]   /opt/anaconda3/envs/ros_env/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:33 (find_package)
+[2.573s]   /opt/anaconda3/envs/ros_env/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)
+[2.573s]   /opt/anaconda3/envs/ros_env/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)
+[2.573s]   CMakeLists.txt:11 (rosidl_generate_interfaces)
+[2.573s] This warning is for project developers.  Use -Wno-dev to suppress it.
+[2.573s] 
+[2.585s] -- Found PythonInterp: /opt/anaconda3/envs/ros_env/bin/python3 (found suitable version "3.11.14", minimum required is "3.6")
+[2.601s] -- Using PythonExtra_INCLUDE_DIRS: /opt/anaconda3/envs/ros_env/include/python3.11;/opt/anaconda3/envs/ros_env/include/python3.11
+[2.622s] -- Using PythonExtra_LIBRARIES: /opt/anaconda3/envs/ros_env/lib/libpython3.11.dylib
+[2.638s] -- Found PythonExtra: .so
+[2.910s] -- Found Python: /opt/anaconda3/envs/ros_env/bin/python (found version "3.11.14") found components: Interpreter Development NumPy Development.Module Development.Embed
+[2.979s] -- Configuring done (2.9s)
+[3.036s] -- Generating done (0.1s)
+[3.036s] CMake Warning:
+[3.036s]   Manually-specified variables were not used by the project:
+[3.036s] 
+[3.036s]     Python3_INCLUDE_DIR
+[3.036s]     Python3_LIBRARY
+[3.036s] 
+[3.036s] 
+[3.047s] -- Build files have been written to: /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces
+[3.052s] Invoked command in '/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/anaconda3/envs/ros_env CONDA_PROMPT_MODIFIER=(base) SHLVL=2 _=/opt/anaconda3/envs/ros_env/bin/env /opt/anaconda3/envs/ros_env/bin/cmake /Users/danielhuinda/robotics/grizzly-25-26/grizzly_interfaces -DPython_EXECUTABLE=/opt/anaconda3/envs/ros_env/bin/python -DPython3_EXECUTABLE=/opt/anaconda3/envs/ros_env/bin/python -DPython_INCLUDE_DIR=/opt/anaconda3/envs/ros_env/include/python3.11 -DPython3_INCLUDE_DIR=/opt/anaconda3/envs/ros_env/include/python3.11 -DPython_LIBRARY=/opt/anaconda3/envs/ros_env/lib/libpython3.11.dylib -DPython3_LIBRARY=/opt/anaconda3/envs/ros_env/lib/libpython3.11.dylib -DCMAKE_INSTALL_PREFIX=/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces
+[3.053s] Invoking command in '/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces': CMAKE_PREFIX_PATH=/opt/anaconda3/envs/ros_env CONDA_PROMPT_MODIFIER=(base) SHLVL=2 _=/opt/anaconda3/envs/ros_env/bin/env /opt/anaconda3/envs/ros_env/bin/cmake --build /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces -- -j12 -l12
+[3.136s] [  3%] Generating C code for ROS interfaces
+[3.160s] [  6%] Generating C++ code for ROS interfaces
+[3.192s] [  6%] Built target ament_cmake_python_copy_grizzly_interfaces
+[3.347s] [  6%] Built target grizzly_interfaces__cpp
+[3.361s] [  9%] Building C object CMakeFiles/grizzly_interfaces__rosidl_generator_c.dir/rosidl_generator_c/grizzly_interfaces/msg/detail/perception_state__functions.c.o
+[3.365s] running egg_info
+[3.373s] creating grizzly_interfaces.egg-info
+[3.373s] writing grizzly_interfaces.egg-info/PKG-INFO
+[3.373s] writing dependency_links to grizzly_interfaces.egg-info/dependency_links.txt
+[3.373s] writing top-level names to grizzly_interfaces.egg-info/top_level.txt
+[3.373s] writing manifest file 'grizzly_interfaces.egg-info/SOURCES.txt'
+[3.375s] [ 12%] Generating C++ type support dispatch for ROS interfaces
+[3.376s] [ 19%] Generating C++ type support for eProsima Fast-RTPS
+[3.376s] [ 19%] Generating C++ introspection for ROS interfaces
+[3.396s] reading manifest file 'grizzly_interfaces.egg-info/SOURCES.txt'
+[3.397s] writing manifest file 'grizzly_interfaces.egg-info/SOURCES.txt'
+[3.432s] [ 19%] Built target ament_cmake_python_build_grizzly_interfaces_egg
+[3.473s] [ 22%] Linking C shared library libgrizzly_interfaces__rosidl_generator_c.dylib
+[3.538s] [ 25%] Building CXX object CMakeFiles/grizzly_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/grizzly_interfaces/msg/perception_state__type_support.cpp.o
+[3.543s] [ 25%] Built target grizzly_interfaces__rosidl_generator_c
+[3.555s] [ 29%] Building CXX object CMakeFiles/grizzly_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/grizzly_interfaces/msg/detail/perception_state__type_support.cpp.o
+[3.565s] [ 32%] Building CXX object CMakeFiles/grizzly_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/grizzly_interfaces/msg/detail/dds_fastrtps/perception_state__type_support.cpp.o
+[3.574s] [ 35%] Generating C type support for eProsima Fast-RTPS
+[3.574s] [ 38%] Generating C type support dispatch for ROS interfaces
+[3.575s] [ 41%] Generating C introspection for ROS interfaces
+[3.752s] [ 45%] Building CXX object CMakeFiles/grizzly_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/grizzly_interfaces/msg/perception_state__type_support.cpp.o
+[3.772s] [ 48%] Building C object CMakeFiles/grizzly_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/grizzly_interfaces/msg/detail/perception_state__type_support.c.o
+[3.774s] [ 51%] Building CXX object CMakeFiles/grizzly_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/grizzly_interfaces/msg/detail/perception_state__type_support_c.cpp.o
+[3.815s] [ 54%] Linking CXX shared library libgrizzly_interfaces__rosidl_typesupport_c.dylib
+[3.843s] [ 58%] Linking C shared library libgrizzly_interfaces__rosidl_typesupport_introspection_c.dylib
+[3.898s] [ 58%] Built target grizzly_interfaces__rosidl_typesupport_c
+[3.927s] [ 61%] Linking CXX shared library libgrizzly_interfaces__rosidl_typesupport_cpp.dylib
+[3.932s] [ 61%] Built target grizzly_interfaces__rosidl_typesupport_introspection_c
+[3.936s] [ 64%] Linking CXX shared library libgrizzly_interfaces__rosidl_typesupport_introspection_cpp.dylib
+[3.992s] [ 67%] Linking CXX shared library libgrizzly_interfaces__rosidl_typesupport_fastrtps_cpp.dylib
+[4.006s] [ 67%] Built target grizzly_interfaces__rosidl_typesupport_cpp
+[4.009s] [ 67%] Built target grizzly_interfaces__rosidl_typesupport_introspection_cpp
+[4.067s] [ 67%] Built target grizzly_interfaces__rosidl_typesupport_fastrtps_cpp
+[4.097s] [ 70%] Linking CXX shared library libgrizzly_interfaces__rosidl_typesupport_fastrtps_c.dylib
+[4.173s] [ 70%] Built target grizzly_interfaces__rosidl_typesupport_fastrtps_c
+[4.221s] [ 70%] Built target grizzly_interfaces
+[4.269s] [ 74%] Generating Python code for ROS interfaces
+[4.463s] [ 74%] Built target grizzly_interfaces__py
+[4.510s] [ 77%] Building C object CMakeFiles/grizzly_interfaces__rosidl_generator_py.dir/rosidl_generator_py/grizzly_interfaces/msg/_perception_state_s.c.o
+[4.620s] [ 80%] Linking C shared library rosidl_generator_py/grizzly_interfaces/libgrizzly_interfaces__rosidl_generator_py.dylib
+[4.693s] [ 80%] Built target grizzly_interfaces__rosidl_generator_py
+[4.749s] [ 90%] Building C object CMakeFiles/grizzly_interfaces__rosidl_typesupport_c__pyext.dir/rosidl_generator_py/grizzly_interfaces/_grizzly_interfaces_s.ep.rosidl_typesupport_c.c.o
+[4.749s] [ 90%] Building C object CMakeFiles/grizzly_interfaces__rosidl_typesupport_introspection_c__pyext.dir/rosidl_generator_py/grizzly_interfaces/_grizzly_interfaces_s.ep.rosidl_typesupport_introspection_c.c.o
+[4.749s] [ 90%] Building C object CMakeFiles/grizzly_interfaces__rosidl_typesupport_fastrtps_c__pyext.dir/rosidl_generator_py/grizzly_interfaces/_grizzly_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c.o
+[4.836s] [ 93%] Linking C shared library rosidl_generator_py/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-311-darwin.so
+[4.836s] [100%] Linking C shared library rosidl_generator_py/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_introspection_c.cpython-311-darwin.so
+[4.836s] [100%] Linking C shared library rosidl_generator_py/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_c.cpython-311-darwin.so
+[4.920s] [100%] Built target grizzly_interfaces__rosidl_typesupport_fastrtps_c__pyext
+[4.921s] [100%] Built target grizzly_interfaces__rosidl_typesupport_c__pyext
+[4.921s] [100%] Built target grizzly_interfaces__rosidl_typesupport_introspection_c__pyext
+[4.937s] Invoked command in '/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/anaconda3/envs/ros_env CONDA_PROMPT_MODIFIER=(base) SHLVL=2 _=/opt/anaconda3/envs/ros_env/bin/env /opt/anaconda3/envs/ros_env/bin/cmake --build /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces -- -j12 -l12
+[4.953s] Invoking command in '/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces': CMAKE_PREFIX_PATH=/opt/anaconda3/envs/ros_env CONDA_PROMPT_MODIFIER=(base) SHLVL=2 _=/opt/anaconda3/envs/ros_env/bin/env /opt/anaconda3/envs/ros_env/bin/cmake --install /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces
+[4.966s] -- Install configuration: ""
+[4.967s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/ament_index/resource_index/rosidl_interfaces/grizzly_interfaces
+[4.967s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces
+[4.967s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg
+[4.967s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/rosidl_generator_c__visibility_control.h
+[4.967s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/perception_state.h
+[4.967s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail
+[4.967s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__functions.c
+[4.968s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__type_support.h
+[4.968s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__struct.h
+[4.968s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__functions.h
+[4.968s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_generator_c.dylib
+[4.975s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_generator_c.dylib
+[4.976s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_generator_c.dylib'
+[5.005s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces
+[5.005s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg
+[5.005s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail
+[5.005s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__rosidl_typesupport_fastrtps_c.h
+[5.005s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[5.005s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_fastrtps_c.dylib
+[5.009s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_fastrtps_c.dylib
+[5.010s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_fastrtps_c.dylib'
+[5.026s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces
+[5.026s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg
+[5.026s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail
+[5.026s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__rosidl_typesupport_introspection_c.h
+[5.026s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__type_support.c
+[5.026s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[5.026s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_introspection_c.dylib
+[5.030s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_introspection_c.dylib
+[5.030s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_introspection_c.dylib'
+[5.048s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_c.dylib
+[5.052s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_c.dylib
+[5.053s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_c.dylib'
+[5.073s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces
+[5.074s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg
+[5.074s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail
+[5.074s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__builder.hpp
+[5.074s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__struct.hpp
+[5.074s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__type_support.hpp
+[5.074s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__traits.hpp
+[5.074s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp
+[5.074s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/perception_state.hpp
+[5.074s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces
+[5.074s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg
+[5.075s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[5.075s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail
+[5.075s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__rosidl_typesupport_fastrtps_cpp.hpp
+[5.075s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/dds_fastrtps
+[5.075s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_fastrtps_cpp.dylib
+[5.080s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_fastrtps_cpp.dylib
+[5.081s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_fastrtps_cpp.dylib'
+[5.100s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces
+[5.100s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg
+[5.100s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail
+[5.100s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__rosidl_typesupport_introspection_cpp.hpp
+[5.100s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/include/grizzly_interfaces/grizzly_interfaces/msg/detail/perception_state__type_support.cpp
+[5.100s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_introspection_cpp.dylib
+[5.104s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_introspection_cpp.dylib
+[5.105s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_introspection_cpp.dylib'
+[5.124s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_cpp.dylib
+[5.127s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_cpp.dylib
+[5.128s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_typesupport_cpp.dylib'
+[5.145s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/environment/pythonpath.sh
+[5.146s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/environment/pythonpath.dsv
+[5.146s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces-0.1.0-py3.11.egg-info
+[5.146s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces-0.1.0-py3.11.egg-info/PKG-INFO
+[5.146s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces-0.1.0-py3.11.egg-info/SOURCES.txt
+[5.146s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces-0.1.0-py3.11.egg-info/top_level.txt
+[5.146s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces-0.1.0-py3.11.egg-info/dependency_links.txt
+[5.146s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces
+[5.147s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/msg
+[5.147s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/msg/_perception_state.py
+[5.147s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/msg/__init__.py
+[5.147s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/msg/_perception_state_s.c
+[5.147s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/_grizzly_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+[5.147s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/libgrizzly_interfaces__rosidl_generator_py.dylib
+[5.148s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/__init__.py
+[5.148s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_c.cpython-311-darwin.so
+[5.148s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-311-darwin.so
+[5.148s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/_grizzly_interfaces_s.ep.rosidl_typesupport_introspection_c.c
+[5.148s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_introspection_c.cpython-311-darwin.so
+[5.148s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/_grizzly_interfaces_s.ep.rosidl_typesupport_c.c
+[5.173s] Listing 'lib/python3.11/site-packages/grizzly_interfaces'...
+[5.173s] Can't list 'lib/python3.11/site-packages/grizzly_interfaces'
+[5.177s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-311-darwin.so
+[5.180s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-311-darwin.so
+[5.181s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-311-darwin.so'
+[5.203s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_introspection_c.cpython-311-darwin.so
+[5.206s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_introspection_c.cpython-311-darwin.so
+[5.207s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_introspection_c.cpython-311-darwin.so'
+[5.223s] -- Up-to-date: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_c.cpython-311-darwin.so
+[5.226s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_c.cpython-311-darwin.so
+[5.227s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/python3.11/site-packages/grizzly_interfaces/grizzly_interfaces_s__rosidl_typesupport_c.cpython-311-darwin.so'
+[5.247s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_generator_py.dylib
+[5.251s] /opt/anaconda3/envs/ros_env/bin/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_generator_py.dylib
+[5.252s] [cctools-port]: generating fake signature for '/Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/lib/libgrizzly_interfaces__rosidl_generator_py.dylib'
+[5.276s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/msg/PerceptionState.idl
+[5.276s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/msg/PerceptionState.msg
+[5.276s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/ament_index/resource_index/package_run_dependencies/grizzly_interfaces
+[5.276s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/ament_index/resource_index/parent_prefix_path/grizzly_interfaces
+[5.277s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/environment/ament_prefix_path.sh
+[5.277s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/environment/ament_prefix_path.dsv
+[5.277s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/environment/path.sh
+[5.277s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/environment/path.dsv
+[5.278s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/local_setup.bash
+[5.278s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/local_setup.sh
+[5.278s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/local_setup.zsh
+[5.278s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/local_setup.dsv
+[5.278s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/package.dsv
+[5.278s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/ament_index/resource_index/packages/grizzly_interfaces
+[5.279s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/export_grizzly_interfaces__rosidl_generator_cExport.cmake
+[5.279s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/export_grizzly_interfaces__rosidl_generator_cExport-noconfig.cmake
+[5.279s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/export_grizzly_interfaces__rosidl_typesupport_fastrtps_cExport.cmake
+[5.279s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/export_grizzly_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+[5.280s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfaces__rosidl_typesupport_introspection_cExport.cmake
+[5.280s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[5.280s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfaces__rosidl_typesupport_cExport.cmake
+[5.280s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfaces__rosidl_typesupport_cExport-noconfig.cmake
+[5.280s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/export_grizzly_interfaces__rosidl_generator_cppExport.cmake
+[5.280s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/export_grizzly_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake
+[5.281s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/export_grizzly_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+[5.281s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfaces__rosidl_typesupport_introspection_cppExport.cmake
+[5.281s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[5.281s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfaces__rosidl_typesupport_cppExport.cmake
+[5.281s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfaces__rosidl_typesupport_cppExport-noconfig.cmake
+[5.281s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/export_grizzly_interfaces__rosidl_generator_pyExport.cmake
+[5.282s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/export_grizzly_interfaces__rosidl_generator_pyExport-noconfig.cmake
+[5.282s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/rosidl_cmake-extras.cmake
+[5.282s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake
+[5.282s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake
+[5.283s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/ament_cmake_export_libraries-extras.cmake
+[5.283s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/ament_cmake_export_targets-extras.cmake
+[5.283s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[5.283s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[5.283s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfacesConfig.cmake
+[5.284s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/cmake/grizzly_interfacesConfig-version.cmake
+[5.284s] -- Installing: /Users/danielhuinda/robotics/grizzly-25-26/install/grizzly_interfaces/share/grizzly_interfaces/package.xml
+[5.286s] Invoked command in '/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/anaconda3/envs/ros_env CONDA_PROMPT_MODIFIER=(base) SHLVL=2 _=/opt/anaconda3/envs/ros_env/bin/env /opt/anaconda3/envs/ros_env/bin/cmake --install /Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces

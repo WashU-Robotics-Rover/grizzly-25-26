@@ -1,0 +1,6 @@
+{
+    "cmake.sourceDirectory": "/Users/danielhuinda/robotics/grizzly-25-26/grizzly_interfaces",
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python-envs.pythonProjects": []
+}

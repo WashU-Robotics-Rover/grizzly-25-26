@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "grizzly_interfaces__py",
+		"source" : "/Users/danielhuinda/robotics/grizzly-25-26/build/grizzly_interfaces/grizzly_interfaces__py"
+	}
+}
