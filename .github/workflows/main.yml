@@ -1,76 +1,52 @@
-name: ROS 2 CI
+# .github/workflows/ros2-humble-ci.yml
+name: Build & Test ROS 2 Humble – grizzly
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
   pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build_and_test:
     runs-on: ubuntu-22.04
-    timeout-minutes: 45
-
+    container:
+      image: ros:humble   # uses the official ROS 2 Humble image
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Optional: speed up git submodules or LFS (delete if you don't use them)
-      - name: Ensure submodules
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive
-
-      - name: ROS 2 CI
-        uses: ichiro-its/ros2-ci@v1.0.0
+      - name: Set up ROS 2 Humble build tools
+        uses: ros-tooling/setup-ros@v0.7
         with:
-          # Pick one: foxy | galactic | humble | iron | jazzy | rolling
-          ros2-distro: humble
+          required-ros-distributions: humble
 
-          # APT packages installed via apt-get (space or newline separated)
-          # Good place for ROS interfaces or common extensions you need at build time.
-          apt-packages: >
-            python3-colcon-common-extensions
-            ros-humble-rmw-fastrtps-cpp
+      - name: Install dependencies via rosdep
+        run: |
+          sudo apt update
+          rosdep update
+          rosdep install --from-paths src --ignore-src -r -y
 
-          # PyPI packages for tools, test libs, linters, etc.
-          pip-packages: >
-            pytest
-            pytest-cov
-            pre-commit
+      - name: Source ROS and build workspace
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --symlink-install
 
-          # Optional: bring in external repos before build (use YAML block)
-          # Format: list of {repo, type, version}. 'type' is usually 'git'.
-          external-repos: |
-            - repo: https://github.com/ros-controls/ros2_control.git
-              type: git
-              version: humble
-            - repo: https://github.com/ros-controls/ros2_controllers.git
-              type: git
-              version: humble
+      - name: Source install space
+        run: |
+          . install/setup.bash
 
-          # Commands run before apt/pip installs (e.g., set up keys, extra apt sources)
-          pre-install: |
-            sudo apt-get update -y
+      - name: Run colcon tests
+        run: |
+          colcon test --event-handlers console_direct+  
+          colcon test-result --verbose
 
-          # Commands run after apt/pip installs (e.g., rosdep, extra tooling)
-          post-install: |
-            sudo rosdep init || true
-            rosdep update
-            rosdep install --from-paths src --ignore-src -y --rosdistro ${ROS_DISTRO}
-
-          # Commands run right before `colcon build`
-          pre-build: |
-            echo "About to build packages:"
-            colcon list
-
-          # Commands run right after `colcon build`
-          post-build: |
-            colcon test-result --verbose || true
-
-          # Commands run right before `colcon test`
-          pre-test: |
-            echo "Running tests…"
-
-          # Commands run right after `colcon test`
-          post-test: |
-            colcon test-result --all --verbose
+      - name: Run test_node from grizzly package
+        run: |
+          . install/setup.bash
+          ros2 run grizzly test_node
