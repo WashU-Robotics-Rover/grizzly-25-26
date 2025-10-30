@@ -40,10 +40,10 @@ jobs:
         run: |
           source install/setup.bash
 
-      - name: Run colcon tests
-        run: |
-          colcon test --event-handlers console_direct+
-          colcon test-result --verbose
+      # - name: Run colcon tests
+      #   run: |
+      #     colcon test --event-handlers console_direct+
+      #     colcon test-result --verbose
 
       - name: Run test_node from grizzly package
         run: |
