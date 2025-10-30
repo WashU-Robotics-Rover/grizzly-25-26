@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build_release:
+  release_sources:
     runs-on: ubuntu-22.04
     container:
       image: ros:humble
@@ -27,78 +27,154 @@ jobs:
           apt-get install -y --no-install-recommends jq rsync
           rm -rf /var/lib/apt/lists/*
 
-      - name: Set up ROS 2 Humble build tools
-        uses: ros-tooling/setup-ros@v0.7
-        with:
-          required-ros-distributions: humble
-
-      # - name: Install dependencies via rosdep
-      #   run: |
-      #     apt-get update
-      #     rosdep update
-      #     rosdep install --from-paths src --ignore-src -r -y
-
-      - name: Build workspace
-        run: |
-          set -e -o pipefail        # <-- no -u
-          set +u                    # temporarily disable nounset
-          source /opt/ros/humble/setup.bash
-          set -u                    # re-enable if you like
-          colcon build --symlink-install
-
-      - name: Make setup portable
+      # Create a portable installer that the user runs locally to build + source
+      - name: Write installer script
         run: |
           set -euo pipefail
-          SETUP="install/setup.bash"
-          sed -i 's/echo "not found: \"\$1\"" 1>&2/: # suppressed/' "$SETUP"
-          awk '
-            BEGIN { skip_next = 0 }
-            {
-              if (skip_next) { skip_next = 0; next }
-              if ($0 ~ /^COLCON_CURRENT_PREFIX="\/opt\/ros\/humble"$/) {
-                skip_next = 1
-                print "# Optional underlay: set ROS_UNDERLAY to a prefix that has local_setup.bash (e.g., RoboStack on mac)"
-                print "if [ -n \"${ROS_UNDERLAY:-}\" ] && [ -f \"$ROS_UNDERLAY/local_setup.bash\" ]; then"
-                print "  COLCON_CURRENT_PREFIX=\"$ROS_UNDERLAY\""
-                print "  _colcon_prefix_chain_bash_source_script \"$COLCON_CURRENT_PREFIX/local_setup.bash\""
-                print "fi"
-              } else {
-                print
-              }
-            }
-          ' "$SETUP" > "$SETUP.tmp"
-          mv "$SETUP.tmp" "$SETUP"
+          cat > install_grizzly.sh <<'EOF'
+          #!/usr/bin/env bash
+          # Installs deps, builds, and shows how to source the workspace.
+          # Usage:
+          #   ./install_grizzly.sh                # in-place, current directory is the workspace root
+          #   ./install_grizzly.sh --no-rosdep    # skip rosdep (air-gapped / preinstalled deps)
+          #   ./install_grizzly.sh --release      # colcon --cmake-args -DCMAKE_BUILD_TYPE=Release
 
-      - name: Prepare release artifacts
+          set -euo pipefail
+
+          WANT_ROSDEP=1
+          BUILD_TYPE="RelWithDebInfo"
+
+          for arg in "$@"; do
+            case "$arg" in
+              --no-rosdep) WANT_ROSDEP=0 ;;
+              --release)   BUILD_TYPE="Release" ;;
+              *) echo "Unknown arg: $arg" >&2; exit 2 ;;
+            esac
+          done
+
+          if ! command -v colcon >/dev/null 2>&1; then
+            echo "colcon not found. Make sure ROS 2 Humble is installed and sourced." >&2
+            echo "For Docker: use 'ros:humble' or source /opt/ros/humble/setup.bash" >&2
+            exit 1
+          fi
+
+          # Try to source Humble if available (safe even if already sourced)
+          if [ -f /opt/ros/humble/setup.bash ]; then
+            # Avoid nounset failures inside setup scripts
+            set +u
+            source /opt/ros/humble/setup.bash
+            set -u
+          fi
+
+          # Initialize rosdep database if needed
+          if [ "$WANT_ROSDEP" -eq 1 ]; then
+            if command -v rosdep >/dev/null 2>&1; then
+              sudo -n true >/dev/null 2>&1 || {
+                echo "rosdep may need sudo for system packages." >&2
+                echo "You might be prompted for your password." >&2
+              }
+              set +e
+              rosdep update
+              set -e
+              # Install deps from workspace (ignore not-ROS sources)
+              rosdep install --from-paths . --ignore-src -r -y || {
+                echo "rosdep install completed with non-fatal errors; continuing." >&2
+              }
+            else
+              echo "rosdep not found; skipping dependency install." >&2
+            fi
+          fi
+
+          # Build
+          echo "Building with CMAKE_BUILD_TYPE=${BUILD_TYPE} ..."
+          colcon build --symlink-install \
+            --cmake-args -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+
+          cat <<EONOTE
+
+          =======================
+          ✅ Build finished.
+
+          To use this workspace in the current shell:
+              source install/setup.bash
+
+          You can add this line to your shell RC to auto-source next time:
+              echo 'source "$(pwd)/install/setup.bash"' >> ~/.bashrc   # or ~/.zshrc
+
+          (If you have an underlay, source it first, then this overlay.)
+          =======================
+          EONOTE
+          EOF
+          chmod +x install_grizzly.sh
+
+      - name: Write quick README
+        run: |
+          set -euo pipefail
+          cat > README_INSTALL.md <<'EOF'
+          # grizzly – source release
+
+          This archive contains the **source** for the `grizzly` ROS 2 (Humble) package(s),
+          plus a helper installer script.
+
+          ## Requirements
+          - ROS 2 Humble environment (e.g., `/opt/ros/humble`), including `colcon`
+          - `rosdep` (recommended)
+
+          ## Build & Use
+          ```bash
+          # In the extracted folder (workspace root)
+          ./install_grizzly.sh        # installs deps (rosdep), builds with colcon
+          source install/setup.bash   # enable the overlay in this shell
+          ```
+
+          Optional flags:
+          - `--no-rosdep`  : skip dependency installation
+          - `--release`    : build with `-DCMAKE_BUILD_TYPE=Release` (default is RelWithDebInfo)
+          EOF
+
+      - name: Stage package sources (exclude CI/build artifacts)
+        run: |
+          set -euo pipefail
+          mkdir -p out/src
+          rsync -a \
+            --exclude '.git*' \
+            --exclude '.github' \
+            --exclude 'build' \
+            --exclude 'install' \
+            --exclude 'log' \
+            ./ out/src/
+
+          # Put installer and README at the archive root
+          cp install_grizzly.sh README_INSTALL.md out/
+
+      - name: Prepare source archive
         id: prep
         run: |
-          set -e -o pipefail  # no -u; setup files sometimes reference unset vars
+          set -euo pipefail
           SHORT_SHA="${GITHUB_SHA::7}"
           BUILD_DATE="$(date -u +%Y%m%d%H%M%S)"
           VERSION="${BUILD_DATE}-${SHORT_SHA}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-          mkdir -p out
-          rsync -a --delete install/ out/install/
+          TAR="grizzly-source-${VERSION}.tar.gz"
+          (cd out && tar -czf "../${TAR}" .)
 
-          echo "${VERSION}" > out/install/VERSION
-          jq -n --arg version "$VERSION" --arg sha "$GITHUB_SHA" --arg date "$BUILD_DATE" \
-            '{version:$version, commit:$sha, built_at_utc:$date, distro:"humble"}' > out/version.json
-
-          TAR="grizzly-install-${VERSION}.tar.gz"
-          (cd out && tar -czf "../${TAR}" install version.json)
           sha256sum "${TAR}" > "SHA256SUMS"
+          jq -n --arg version "$VERSION" --arg sha "$GITHUB_SHA" --arg date "$BUILD_DATE" \
+            '{artifact:"source", version:$version, commit:$sha, built_at_utc:$date, distro:"humble"}' > "version.json"
+
           echo "tar=${TAR}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "auto-${{ steps.prep.outputs.version }}"
-          name: "grizzly install ${{ steps.prep.outputs.version }}"
+          name: "grizzly source ${{ steps.prep.outputs.version }}"
           draft: false
           prerelease: true
           files: |
             ${{ steps.prep.outputs.tar }}
             SHA256SUMS
+            version.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
