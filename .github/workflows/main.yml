@@ -3,20 +3,19 @@ name: Build & Test ROS 2 Humble – grizzly
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   build_and_test:
     runs-on: ubuntu-22.04
     container:
-      image: ros:humble   # uses the official ROS 2 Humble image
+      image: ros:humble   # official ROS 2 Humble image (Jammy)
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,21 +31,21 @@ jobs:
       #     rosdep update
       #     rosdep install --from-paths src --ignore-src -r -y
 
-      - name: Source ROS and build workspace
+      - name: Build workspace
         run: |
-          . /opt/ros/humble/setup.bash
+          source /opt/ros/humble/setup.bash
           colcon build --symlink-install
 
       - name: Source install space
         run: |
-          . install/setup.bash
+          source install/setup.bash
 
       - name: Run colcon tests
         run: |
-          colcon test --event-handlers console_direct+  
+          colcon test --event-handlers console_direct+
           colcon test-result --verbose
 
       - name: Run test_node from grizzly package
         run: |
-          . install/setup.bash
+          source install/setup.bash
           ros2 run grizzly test_node
