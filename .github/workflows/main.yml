@@ -1,0 +1,76 @@
+name: ROS 2 CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Optional: speed up git submodules or LFS (delete if you don't use them)
+      - name: Ensure submodules
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive
+
+      - name: ROS 2 CI
+        uses: ichiro-its/ros2-ci@v1.0.0
+        with:
+          # Pick one: foxy | galactic | humble | iron | jazzy | rolling
+          ros2-distro: humble
+
+          # APT packages installed via apt-get (space or newline separated)
+          # Good place for ROS interfaces or common extensions you need at build time.
+          apt-packages: >
+            python3-colcon-common-extensions
+            ros-humble-rmw-fastrtps-cpp
+
+          # PyPI packages for tools, test libs, linters, etc.
+          pip-packages: >
+            pytest
+            pytest-cov
+            pre-commit
+
+          # Optional: bring in external repos before build (use YAML block)
+          # Format: list of {repo, type, version}. 'type' is usually 'git'.
+          external-repos: |
+            - repo: https://github.com/ros-controls/ros2_control.git
+              type: git
+              version: humble
+            - repo: https://github.com/ros-controls/ros2_controllers.git
+              type: git
+              version: humble
+
+          # Commands run before apt/pip installs (e.g., set up keys, extra apt sources)
+          pre-install: |
+            sudo apt-get update -y
+
+          # Commands run after apt/pip installs (e.g., rosdep, extra tooling)
+          post-install: |
+            sudo rosdep init || true
+            rosdep update
+            rosdep install --from-paths src --ignore-src -y --rosdistro ${ROS_DISTRO}
+
+          # Commands run right before `colcon build`
+          pre-build: |
+            echo "About to build packages:"
+            colcon list
+
+          # Commands run right after `colcon build`
+          post-build: |
+            colcon test-result --verbose || true
+
+          # Commands run right before `colcon test`
+          pre-test: |
+            echo "Running tests…"
+
+          # Commands run right after `colcon test`
+          post-test: |
+            colcon test-result --all --verbose
