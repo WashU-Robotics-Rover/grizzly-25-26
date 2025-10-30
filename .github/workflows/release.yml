@@ -1,16 +1,16 @@
-# .github/workflows/release.yml
 name: Release – grizzly
 
 on:
   workflow_call:
     inputs:
       build_sha:
-        description: "Commit SHA to release (from the build workflow)"
+        description: "Commit SHA to release"
         required: false
         type: string
 
+# Can be explicit or `inherit`; explicit keeps intent clear
 permissions:
-  contents: write   # needed to publish GitHub Releases
+  contents: write
 
 jobs:
   release_sources:
@@ -21,7 +21,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: Checkout source (use build SHA if provided)
+      - name: Checkout source (match the built commit)
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.build_sha || github.sha }}
@@ -33,17 +33,11 @@ jobs:
           apt-get install -y --no-install-recommends jq rsync
           rm -rf /var/lib/apt/lists/*
 
-      # Create a portable installer that the user runs locally to build + source
       - name: Write installer script
         run: |
           set -euo pipefail
           cat > install_grizzly.sh <<'EOF'
           #!/usr/bin/env bash
-          # Installs deps, builds, and shows how to source the workspace.
-          # Usage:
-          #   ./install_grizzly.sh                # in-place, current directory is the workspace root
-          #   ./install_grizzly.sh --no-rosdep    # skip rosdep (air-gapped / preinstalled deps)
-          #   ./install_grizzly.sh --release      # colcon --cmake-args -DCMAKE_BUILD_TYPE=Release
           set -euo pipefail
           WANT_ROSDEP=1
           BUILD_TYPE="RelWithDebInfo"
@@ -59,43 +53,28 @@ jobs:
             echo "For Docker: use 'ros:humble' or source /opt/ros/humble/setup.bash" >&2
             exit 1
           fi
-          # Try to source Humble if available (safe even if already sourced)
           if [ -f /opt/ros/humble/setup.bash ]; then
-            # Avoid nounset failures inside setup scripts
             set +u
             source /opt/ros/humble/setup.bash
             set -u
           fi
-          # Initialize rosdep database if needed
-          if [ "$WANT_ROSDEP" -eq 1 ]; then
-            if command -v rosdep >/dev/null 2>&1; then
-              sudo -n true >/dev/null 2>&1 || {
-                echo "rosdep may need sudo for system packages." >&2
-                echo "You might be prompted for your password." >&2
-              }
-              set +e
-              rosdep update
-              set -e
-              # Install deps from workspace (ignore not-ROS sources)
-              rosdep install --from-paths . --ignore-src -r -y || {
-                echo "rosdep install completed with non-fatal errors; continuing." >&2
-              }
-            else
-              echo "rosdep not found; skipping dependency install." >&2
-            fi
+          if [ "$WANT_ROSDEP" -eq 1 ] && command -v rosdep >/dev/null 2>&1; then
+            set +e
+            rosdep update
+            set -e
+            rosdep install --from-paths . --ignore-src -r -y || {
+              echo "rosdep install completed with non-fatal errors; continuing." >&2
+            }
           fi
-          # Build
           echo "Building with CMAKE_BUILD_TYPE=${BUILD_TYPE} ..."
-          colcon build --symlink-install \
-            --cmake-args -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+          colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
           cat <<EONOTE
           =======================
           ✅ Build finished.
           To use this workspace in the current shell:
               source install/setup.bash
-          You can add this line to your shell RC to auto-source next time:
+          You can add this line to your shell RC:
               echo 'source "$(pwd)/install/setup.bash"' >> ~/.bashrc   # or ~/.zshrc
-          (If you have an underlay, source it first, then this overlay.)
           =======================
           EONOTE
           EOF
@@ -113,16 +92,15 @@ jobs:
           - `rosdep` (recommended)
           ## Build & Use
           ```bash
-          # In the extracted folder (workspace root)
-          ./install_grizzly.sh        # installs deps (rosdep), builds with colcon
-          source install/setup.bash   # enable the overlay in this shell
+          ./install_grizzly.sh
+          source install/setup.bash
           ```
           Optional flags:
           - `--no-rosdep`  : skip dependency installation
-          - `--release`    : build with `-DCMAKE_BUILD_TYPE=Release` (default is RelWithDebInfo)
+          - `--release`    : use `-DCMAKE_BUILD_TYPE=Release`
           EOF
 
-      - name: Stage package sources (exclude CI/build artifacts)
+      - name: Stage package sources
         run: |
           set -euo pipefail
           mkdir -p out/src
@@ -133,7 +111,6 @@ jobs:
             --exclude 'install' \
             --exclude 'log' \
             ./ out/src/
-          # Put installer and README at the archive root
           cp install_grizzly.sh README_INSTALL.md out/
 
       - name: Prepare source archive
