@@ -34,7 +34,7 @@ jobs:
 
       - name: Source ROS and build workspace
         run: |
-          source /opt/ros/humble/setup.bash
+          . /opt/ros/humble/setup.bash
           colcon build --symlink-install
 
       - name: Source install space
