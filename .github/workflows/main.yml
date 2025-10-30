@@ -20,11 +20,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache ROS 2 build/install artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            install
+            log
+          key: ros2-humble-grizzly-${{ runner.os }}-${{ hashFiles('**/src/**', '**/package.xml', '**/CMakeLists.txt') }}
+          restore-keys: |
+            ros2-humble-grizzly-${{ runner.os }}-
+
       - name: Set up ROS 2 Humble build tools
         uses: ros-tooling/setup-ros@v0.7
         with:
           required-ros-distributions: humble
 
+      # Optional dependency installation
       # - name: Install dependencies via rosdep
       #   run: |
       #     sudo apt update
@@ -40,6 +52,7 @@ jobs:
         run: |
           source install/setup.bash
 
+      # Optional test phase
       # - name: Run colcon tests
       #   run: |
       #     colcon test --event-handlers console_direct+
