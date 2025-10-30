@@ -1,12 +1,16 @@
-name: Build & Release ROS 2 Humble install – grizzly
+# .github/workflows/release.yml
+name: Release – grizzly
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      build_sha:
+        description: "Commit SHA to release (from the build workflow)"
+        required: false
+        type: string
 
 permissions:
-  contents: write
+  contents: write   # needed to publish GitHub Releases
 
 jobs:
   release_sources:
@@ -17,8 +21,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: Checkout
+      - name: Checkout source (use build SHA if provided)
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.build_sha || github.sha }}
 
       - name: Install helper tools
         run: |
@@ -38,12 +44,9 @@ jobs:
           #   ./install_grizzly.sh                # in-place, current directory is the workspace root
           #   ./install_grizzly.sh --no-rosdep    # skip rosdep (air-gapped / preinstalled deps)
           #   ./install_grizzly.sh --release      # colcon --cmake-args -DCMAKE_BUILD_TYPE=Release
-
           set -euo pipefail
-
           WANT_ROSDEP=1
           BUILD_TYPE="RelWithDebInfo"
-
           for arg in "$@"; do
             case "$arg" in
               --no-rosdep) WANT_ROSDEP=0 ;;
@@ -51,13 +54,11 @@ jobs:
               *) echo "Unknown arg: $arg" >&2; exit 2 ;;
             esac
           done
-
           if ! command -v colcon >/dev/null 2>&1; then
             echo "colcon not found. Make sure ROS 2 Humble is installed and sourced." >&2
             echo "For Docker: use 'ros:humble' or source /opt/ros/humble/setup.bash" >&2
             exit 1
           fi
-
           # Try to source Humble if available (safe even if already sourced)
           if [ -f /opt/ros/humble/setup.bash ]; then
             # Avoid nounset failures inside setup scripts
@@ -65,7 +66,6 @@ jobs:
             source /opt/ros/humble/setup.bash
             set -u
           fi
-
           # Initialize rosdep database if needed
           if [ "$WANT_ROSDEP" -eq 1 ]; then
             if command -v rosdep >/dev/null 2>&1; then
@@ -84,23 +84,17 @@ jobs:
               echo "rosdep not found; skipping dependency install." >&2
             fi
           fi
-
           # Build
           echo "Building with CMAKE_BUILD_TYPE=${BUILD_TYPE} ..."
           colcon build --symlink-install \
             --cmake-args -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
-
           cat <<EONOTE
-
           =======================
           ✅ Build finished.
-
           To use this workspace in the current shell:
               source install/setup.bash
-
           You can add this line to your shell RC to auto-source next time:
               echo 'source "$(pwd)/install/setup.bash"' >> ~/.bashrc   # or ~/.zshrc
-
           (If you have an underlay, source it first, then this overlay.)
           =======================
           EONOTE
@@ -112,21 +106,17 @@ jobs:
           set -euo pipefail
           cat > README_INSTALL.md <<'EOF'
           # grizzly – source release
-
           This archive contains the **source** for the `grizzly` ROS 2 (Humble) package(s),
           plus a helper installer script.
-
           ## Requirements
           - ROS 2 Humble environment (e.g., `/opt/ros/humble`), including `colcon`
           - `rosdep` (recommended)
-
           ## Build & Use
           ```bash
           # In the extracted folder (workspace root)
           ./install_grizzly.sh        # installs deps (rosdep), builds with colcon
           source install/setup.bash   # enable the overlay in this shell
           ```
-
           Optional flags:
           - `--no-rosdep`  : skip dependency installation
           - `--release`    : build with `-DCMAKE_BUILD_TYPE=Release` (default is RelWithDebInfo)
@@ -143,7 +133,6 @@ jobs:
             --exclude 'install' \
             --exclude 'log' \
             ./ out/src/
-
           # Put installer and README at the archive root
           cp install_grizzly.sh README_INSTALL.md out/
 
@@ -155,14 +144,11 @@ jobs:
           BUILD_DATE="$(date -u +%Y%m%d%H%M%S)"
           VERSION="${BUILD_DATE}-${SHORT_SHA}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-
           TAR="grizzly-source-${VERSION}.tar.gz"
           (cd out && tar -czf "../${TAR}" .)
-
           sha256sum "${TAR}" > "SHA256SUMS"
           jq -n --arg version "$VERSION" --arg sha "$GITHUB_SHA" --arg date "$BUILD_DATE" \
             '{artifact:"source", version:$version, commit:$sha, built_at_utc:$date, distro:"humble"}' > "version.json"
-
           echo "tar=${TAR}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
