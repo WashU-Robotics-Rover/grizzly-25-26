@@ -1,0 +1,82 @@
+name: Build & Release ROS 2 Humble install – grizzly
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build_release:
+    runs-on: ubuntu-22.04
+    container:
+      image: ros:humble
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup ROS 2 tools
+        uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: humble
+
+      - name: Cache build/install
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            install
+            log
+          key: ros2-humble-grizzly-${{ runner.os }}-${{ hashFiles('**/src/**', '**/package.xml', '**/CMakeLists.txt') }}
+          restore-keys: |
+            ros2-humble-grizzly-${{ runner.os }}-
+
+      - name: Build
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --symlink-install
+
+      - name: Prepare release artifacts
+        id: prep
+        run: |
+          set -euo pipefail
+          source install/setup.bash
+          source install/local_setup.bash
+
+          # Version info (semver if you tag; otherwise date+shortsha)
+          SHORT_SHA="${GITHUB_SHA::7}"
+          BUILD_DATE="$(date -u +%Y%m%d%H%M%S)"
+          VERSION="${BUILD_DATE}-${SHORT_SHA}"
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+          # Stage a copy of install so tarball paths are clean
+          mkdir -p out
+          rsync -a --delete install/ out/install/
+
+          # Write version metadata
+          echo "${VERSION}" > out/install/VERSION
+          jq -n --arg version "$VERSION" --arg sha "$GITHUB_SHA" --arg date "$BUILD_DATE" \
+            '{version:$version, commit:$sha, built_at_utc:$date, distro:"humble"}' > out/version.json
+
+          # Tar and checksums
+          TAR="grizzly-install-${VERSION}.tar.gz"
+          (cd out && tar -czf "../${TAR}" install version.json)
+          sha256sum "${TAR}" > "SHA256SUMS"
+
+          echo "tar=${TAR}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "auto-${{ steps.prep.outputs.version }}"
+          name: "grizzly install ${{ steps.prep.outputs.version }}"
+          draft: false
+          prerelease: true
+          files: |
+            ${{ steps.prep.outputs.tar }}
+            SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
