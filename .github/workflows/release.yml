@@ -24,11 +24,10 @@ jobs:
       - name: Install helper tools
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends jq rsync
+          apt-get install -y --no-install-recommends jq rsync perl
           rm -rf /var/lib/apt/lists/*
 
-      # Optional: setup-ros is not strictly needed inside ros:humble,
-      # but harmless. Keep if you want rosdep keys and friends.
+      # Optional: inside ros:humble this is not strictly required, but ok to keep
       - name: Set up ROS 2 Humble build tools
         uses: ros-tooling/setup-ros@v0.7
         with:
@@ -45,22 +44,34 @@ jobs:
           source /opt/ros/humble/setup.bash
           colcon build --symlink-install
 
+      # Make the generated setup portable across environments (Linux apt, RoboStack/mac, etc.)
+      - name: Make setup portable
+        run: |
+          set -euo pipefail
+          SETUP=install/setup.bash
+
+          # (1) Silence "not found" messages from the helper so missing underlays don't spam users
+          perl -0777 -pe 's/echo "not found: \\"\\$1\\"" 1>&2/:\ # suppressed/g' -i "$SETUP"
+
+          # (2) Replace hardcoded /opt/ros/humble underlay with optional $ROS_UNDERLAY if provided
+          perl -0777 -pe '
+            s/COLCON_CURRENT_PREFIX="\/opt\/ros\/humble"\n_colcon_prefix_chain_bash_source_script "\$COLCON_CURRENT_PREFIX\/local_setup\.bash"/\
+# Optional underlay: set ROS_UNDERLAY to a prefix that has local_setup.bash (e.g., RoboStack on mac)\n\
+if [ -n "\${ROS_UNDERLAY:-}" ] \&\& [ -f "\$ROS_UNDERLAY\/local_setup.bash" ]; then\n\
+  COLCON_CURRENT_PREFIX="\$ROS_UNDERLAY"\n\
+  _colcon_prefix_chain_bash_source_script "\$COLCON_CURRENT_PREFIX\/local_setup.bash"\n\
+fi/
+          ' -i "$SETUP"
+
       - name: Prepare release artifacts
         id: prep
         run: |
           set -e -o pipefail  # note: no -u here to avoid nounset issues
 
-          # Safely source colcon environment (disable nounset while sourcing)
-          set +u
-          [ -f install/setup.bash ] && source install/setup.bash
-          [ -f install/local_setup.bash ] && source install/local_setup.bash
-          set -u
-
           # Version info (semver if tagging; otherwise date+shortsha)
           SHORT_SHA="${GITHUB_SHA::7}"
           BUILD_DATE="$(date -u +%Y%m%d%H%M%S)"
           VERSION="${BUILD_DATE}-${SHORT_SHA}"
-
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
           # Stage a copy of install so tarball paths are clean
@@ -76,7 +87,6 @@ jobs:
           TAR="grizzly-install-${VERSION}.tar.gz"
           (cd out && tar -czf "../${TAR}" install version.json)
           sha256sum "${TAR}" > "SHA256SUMS"
-
           echo "tar=${TAR}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
