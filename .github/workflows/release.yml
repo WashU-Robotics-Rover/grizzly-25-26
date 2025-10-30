@@ -27,7 +27,6 @@ jobs:
           apt-get install -y --no-install-recommends jq rsync
           rm -rf /var/lib/apt/lists/*
 
-      # Optional inside ros:humble; okay to keep
       - name: Set up ROS 2 Humble build tools
         uses: ros-tooling/setup-ros@v0.7
         with:
@@ -41,22 +40,17 @@ jobs:
 
       - name: Build workspace
         run: |
-          set -euo pipefail
+          set -e -o pipefail        # <-- no -u
+          set +u                    # temporarily disable nounset
           source /opt/ros/humble/setup.bash
+          set -u                    # re-enable if you like
           colcon build --symlink-install
 
-      # Make the generated setup portable without YAML-unfriendly quoting
       - name: Make setup portable
         run: |
           set -euo pipefail
           SETUP="install/setup.bash"
-
-          # (1) Silence "not found" messages in _colcon_prefix_chain_bash_source_script
-          #     Exact line in template: echo "not found: \"$1\"" 1>&2
           sed -i 's/echo "not found: \"\$1\"" 1>&2/: # suppressed/' "$SETUP"
-
-          # (2) Replace hardcoded /opt/ros/humble underlay with optional $ROS_UNDERLAY block
-          #     We detect the specific two-line sequence and output a conditional block instead.
           awk '
             BEGIN { skip_next = 0 }
             {
@@ -78,23 +72,19 @@ jobs:
       - name: Prepare release artifacts
         id: prep
         run: |
-          set -e -o pipefail  # no -u here (some env files reference unset vars)
-
+          set -e -o pipefail  # no -u; setup files sometimes reference unset vars
           SHORT_SHA="${GITHUB_SHA::7}"
           BUILD_DATE="$(date -u +%Y%m%d%H%M%S)"
           VERSION="${BUILD_DATE}-${SHORT_SHA}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-          # Stage clean paths
           mkdir -p out
           rsync -a --delete install/ out/install/
 
-          # Version metadata
           echo "${VERSION}" > out/install/VERSION
           jq -n --arg version "$VERSION" --arg sha "$GITHUB_SHA" --arg date "$BUILD_DATE" \
             '{version:$version, commit:$sha, built_at_utc:$date, distro:"humble"}' > out/version.json
 
-          # Tarball + checksum
           TAR="grizzly-install-${VERSION}.tar.gz"
           (cd out && tar -czf "../${TAR}" install version.json)
           sha256sum "${TAR}" > "SHA256SUMS"
