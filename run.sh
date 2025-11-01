@@ -13,9 +13,18 @@
 #   - ROS 2 environment must be available (conda env: ros_env)
 #
 # What this script does:
-# 1. Sources the ROS 2 base environment from conda
-# 2. Sources the local workspace overlay (install/setup.zsh)
-# 3. Launches the grizzly_minimal.launch.py file
+# 1. Activates the conda environment (ros_env)
+# 2. Sources the ROS 2 base environment from conda
+# 3. Sources the local workspace overlay (install/setup.zsh)
+# 4. Launches the grizzly_minimal.launch.py file
+
+# --- ACTIVATE CONDA ENVIRONMENT ---
+
+# Initialize conda for shell script (required for conda activate to work in scripts)
+eval "$(conda shell.zsh hook)"
+
+# Activate the ros_env conda environment
+conda activate ros_env
 
 # --- SOURCE ROS 2 BASE ENVIRONMENT ---
 

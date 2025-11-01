@@ -8,8 +8,8 @@
 # 2. Generate code for custom messages (.msg files)
 # 3. Export dependencies for packages that depend on this one
 
-# Require CMake 3.8 or higher (standard for ROS 2)
-cmake_minimum_required(VERSION 3.8)
+# Require CMake 3.10 or higher (recommended for ROS 2)
+cmake_minimum_required(VERSION 3.10)
 
 # Define the project name (must match package.xml)
 project(grizzly_interfaces)

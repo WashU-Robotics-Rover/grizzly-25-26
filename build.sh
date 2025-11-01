@@ -16,6 +16,14 @@
 # - Conda environments require explicit paths to ensure consistency
 # - This prevents mixing Python versions between build and runtime
 
+# --- ACTIVATE CONDA ENVIRONMENT ---
+
+# Initialize conda for shell script (required for conda activate to work in scripts)
+eval "$(conda shell.zsh hook)"
+
+# Activate the ros_env conda environment
+conda activate ros_env
+
 # --- SETUP ROS 2 ENVIRONMENT ---
 
 # Source the ROS 2 environment from the conda environment
@@ -26,15 +34,14 @@ source /opt/anaconda3/envs/ros_env/setup.zsh
 
 # Use colcon to build all packages in the workspace
 # colcon is the standard build tool for ROS 2 workspaces
+# We explicitly specify Python paths to ensure CMake finds the correct Python installation
+# from the conda environment (prevents mixing Python versions)
 colcon build \
   --cmake-args \
-    # Explicitly tell CMake which Python to use (prevents wrong Python detection)
     -DPython_EXECUTABLE=/opt/anaconda3/envs/ros_env/bin/python \
-    # Path to Python header files (needed for C++ extensions)
     -DPython_INCLUDE_DIR=/opt/anaconda3/envs/ros_env/include/python3.11 \
-    # Path to Python shared library (needed for linking)
     -DPython_LIBRARY=/opt/anaconda3/envs/ros_env/lib/libpython3.11.dylib \
-  "$@"  # Forward any additional arguments passed to this script
+  "$@"
 
 # --- SOURCE THE WORKSPACE ---
 

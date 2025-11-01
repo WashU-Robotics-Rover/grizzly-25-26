@@ -22,8 +22,8 @@ setup(
     packages=[package_name, package_name + '.core'],
     
     # Map package names to their directory locations
-    # '.' means the current directory is the root of grizzly_stack package
-    package_dir={package_name: '.'},
+    # 'src' means the src directory is the root of grizzly_stack package
+    package_dir={'': 'src'},
     
     # Define data files to install in the ROS 2 install space
     # These files are installed to specific locations so ROS 2 can find them
