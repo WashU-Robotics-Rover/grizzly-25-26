@@ -35,14 +35,15 @@ jobs:
       #     rosdep update
       #     rosdep install --from-paths src --ignore-src -r -y
 
-      - name: Build workspace
+      - name: Run build script
         run: |
-          source /opt/ros/humble/setup.bash
-          colcon build --symlink-install
+          chmod +x ./build.sh
+          ./build.sh --symlink-install
 
       - name: Source install space
         run: |
           source install/setup.bash
+
 
       # - name: Run colcon tests
       #   run: |
