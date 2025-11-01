@@ -49,11 +49,11 @@ jobs:
       #     colcon test --event-handlers console_direct+
       #     colcon test-result --verbose
 
-      - name: Run test_node from grizzly package
+      - name: Run system_manager
         run: |
           source install/setup.bash
           source install/local_setup.bash
-          ros2 run grizzly test_node
+          ros2 launch grizzly_stack grizzly_minimal.launch.py
 
   release:
     needs: build_and_test
