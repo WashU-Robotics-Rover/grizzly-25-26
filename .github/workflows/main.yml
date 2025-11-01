@@ -27,7 +27,7 @@ jobs:
         with:
           required-ros-distributions: humble
 
-      # Optional: install dependencies
+      # Optional dependency install:
       # - name: Install dependencies via rosdep
       #   run: |
       #     sudo apt update
@@ -36,8 +36,11 @@ jobs:
 
       - name: Build workspace
         run: |
-          set -euo pipefail
+          set -eo pipefail
+          set +u
           source /opt/ros/humble/setup.bash
+          set -u
+
           echo "🚧 Building workspace with explicit Python linkage..."
           colcon build \
             --cmake-args \
@@ -48,17 +51,28 @@ jobs:
 
       - name: Source install space
         run: |
+          set -eo pipefail
+          set +u
           source install/setup.bash
+          set -u
 
+      # Enable if you have tests
       # - name: Run colcon tests
       #   run: |
+      #     set -eo pipefail
+      #     set +u
+      #     source install/setup.bash
+      #     set -u
       #     colcon test --event-handlers console_direct+
       #     colcon test-result --verbose
 
       - name: Run test_node from grizzly package
         run: |
+          set -eo pipefail
+          set +u
           source install/setup.bash
           source install/local_setup.bash
+          set -u
           ros2 launch grizzly_stack grizzly_minimal.launch.py
 
   release:
