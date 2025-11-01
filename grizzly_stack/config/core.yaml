@@ -1,3 +1,18 @@
+# Configuration file for core system nodes in grizzly_stack
+#
+# This YAML file defines ROS 2 parameters for the core subsystem nodes.
+# Parameters are organized by node name and loaded at launch time.
+#
+# Format:
+#   node_name:
+#     ros__parameters:
+#       parameter_name: value
+
+# --- SYSTEM MANAGER NODE PARAMETERS ---
 system_manager:
   ros__parameters:
+    # health_rate_hz: Frequency (in Hertz) at which health status messages are published
+    # Higher values = more frequent updates, but more network traffic
+    # Default: 1.0 Hz (one message per second)
+    # Valid range: 0.1 - 10.0 Hz (recommended)
     health_rate_hz: 1.0

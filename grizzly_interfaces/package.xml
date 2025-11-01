@@ -1,24 +1,45 @@
 <?xml version="1.0"?>
+<!--
+  Package manifest for grizzly_interfaces
+  
+  This file defines the metadata and dependencies for the grizzly_interfaces package,
+  which contains custom ROS 2 message definitions for the Grizzly rover.
+  
+  Format 3 is the latest package.xml format for ROS 2.
+-->
 <package format="3">
+  <!-- Package identification -->
   <name>grizzly_interfaces</name>
   <version>0.1.0</version>
   <description>Minimal messages for Grizzly.</description>
   <maintainer email="huindam@gmail.com">WashU Rover Team</maintainer>
   <license>MIT</license>
 
+  <!-- Build tool dependencies: required to build this package -->
+  <!-- ament_cmake: CMake build system for ROS 2 -->
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <!-- rosidl_default_generators: generates code from .msg/.srv/.action files -->
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
-  <depend>std_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>nav_msgs</depend>
+  <!-- Dependencies needed at both build and run time -->
+  <!-- These packages provide message types used within our custom messages -->
+  <depend>std_msgs</depend>       <!-- Standard message types (Header, String, etc.) -->
+  <depend>geometry_msgs</depend>  <!-- Geometric primitives (Pose, Twist, etc.) -->
+  <depend>nav_msgs</depend>       <!-- Navigation messages (Odometry, Path, etc.) -->
 
+  <!-- Execution dependencies: required at runtime only -->
+  <!-- rosidl_default_runtime: runtime support for generated message code -->
   <exec_depend>rosidl_default_runtime</exec_depend>
 
+  <!-- Test dependencies: required only when running tests -->
+  <!-- ament_lint_common: standard linters for code quality checks -->
   <test_depend>ament_lint_common</test_depend>
 
+  <!-- This package is part of the rosidl_interface_packages group -->
+  <!-- This tells ROS 2 that this package provides custom interfaces -->
   <member_of_group>rosidl_interface_packages</member_of_group>
 
+  <!-- Export information: tells ROS 2 this is a CMake package -->
   <export>
     <build_type>ament_cmake</build_type>
   </export>

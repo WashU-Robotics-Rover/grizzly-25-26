@@ -1,23 +1,50 @@
 <?xml version="1.0"?>
+<!--
+  Package manifest for grizzly_stack
+  
+  This file defines the metadata and dependencies for the grizzly_stack package,
+  which contains all the main software components for the Grizzly rover:
+  - Core: System management and health monitoring
+  - Perception: Sensor processing and state estimation
+  - Planning: High-level decision making for drive, arm, science subsystems
+  - Control: Low-level motor and actuator control
+  - Telemetry: Data logging and monitoring
+  
+  Format 3 is the latest package.xml format for ROS 2.
+-->
 <package format="3">
+  <!-- Package identification -->
   <name>grizzly_stack</name>
   <version>0.1.0</version>
   <description>Single-package stack for Grizzly: core, perception, planning, control, telemetry.</description>
   <maintainer email="you@washu.edu">Grizzly Team</maintainer>
   <license>MIT</license>
 
+  <!-- Build tool dependencies: required to build this package -->
+  <!-- ament_python: Python-specific build system for ROS 2 -->
   <buildtool_depend>ament_python</buildtool_depend>
 
+  <!-- Execution dependencies: required at runtime -->
+  <!-- rclpy: ROS 2 Python client library (core ROS 2 functionality) -->
   <exec_depend>rclpy</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
+  
+  <!-- Standard ROS 2 message packages -->
+  <exec_depend>std_msgs</exec_depend>       <!-- Basic types: String, Int, Float, etc. -->
+  <exec_depend>geometry_msgs</exec_depend>  <!-- Pose, Twist, Transform, etc. -->
+  <exec_depend>nav_msgs</exec_depend>       <!-- Odometry, Path, Map, etc. -->
+  
+  <!-- Custom message package for Grizzly-specific messages -->
   <exec_depend>grizzly_interfaces</exec_depend>
-  <exec_depend>launch</exec_depend>
-  <exec_depend>launch_ros</exec_depend>
+  
+  <!-- Launch system dependencies for starting nodes -->
+  <exec_depend>launch</exec_depend>         <!-- Core launch functionality -->
+  <exec_depend>launch_ros</exec_depend>     <!-- ROS 2-specific launch actions -->
 
+  <!-- Test dependencies: required only when running tests -->
+  <!-- pytest: Python testing framework -->
   <test_depend>pytest</test_depend>
 
+  <!-- Export information: tells ROS 2 this is a Python package -->
   <export>
     <build_type>ament_python</build_type>
   </export>
