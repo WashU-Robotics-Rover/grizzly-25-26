@@ -6,6 +6,10 @@ log/
 #GitHub releases
 downloads/
 
+#Tests
+htmlcov/
+.coverage
+
 # Python compiled files
 __pycache__/
 *.py[cod]

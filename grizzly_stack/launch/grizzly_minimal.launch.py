@@ -5,15 +5,15 @@ This launch file starts the core system_manager lifecycle node and automatically
 transitions it through its lifecycle states (Configure -> Activate).
 
 Lifecycle Management:
-- Uses TimerAction to trigger state transitions at specific intervals
-- Configures the node after 1 second (allows node to fully initialize)
-- Activates the node after 2 seconds (allows configuration to complete)
+- Uses event-driven state transitions based on actual state changes
+- Configures the node when it starts (OnProcessStart event)
+- Activates the node when configuration successfully completes (OnStateTransition event)
 
-This approach ensures deterministic startup and proper resource initialization.
+This approach is robust against slow compute and timing variations.
 """
 
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler, EmitEvent, TimerAction
+from launch.actions import RegisterEventHandler, EmitEvent
 from launch.event_handlers import OnProcessStart
 from launch_ros.actions import LifecycleNode
 from launch_ros.substitutions import FindPackageShare
@@ -50,7 +50,7 @@ def generate_launch_description():
         parameters=[config_file],          # Load parameters from the YAML config file
     )
     
-    # --- LIFECYCLE TRANSITION EVENTS ---
+    # --- EVENT-DRIVEN LIFECYCLE TRANSITIONS ---
     
     # Create an event to trigger the CONFIGURE transition
     # This moves the node from Unconfigured -> Inactive state
@@ -76,26 +76,34 @@ def generate_launch_description():
         )
     )
     
-    # --- TIMER ACTIONS FOR AUTOMATIC STATE TRANSITIONS ---
+    # --- EVENT HANDLERS FOR AUTOMATIC STATE TRANSITIONS ---
     
-    # Schedule the configure event to trigger 1 second after launch
-    # This delay ensures the node has fully initialized before configuration
-    configure_timer = TimerAction(
-        period=1.0,                 # Wait 1.0 second
-        actions=[configure_event],  # Then trigger the configure event
+    # Register an event handler to configure the node when it starts
+    # This triggers the CONFIGURE transition immediately after the process starts
+    # No fixed timing delay - responds to actual process start event
+    configure_on_start = RegisterEventHandler(
+        OnProcessStart(
+            target_action=system_manager_node,  # Watch for this node's process to start
+            on_start=[configure_event],         # When it starts, trigger configure
+        )
     )
     
-    # Schedule the activate event to trigger 2 seconds after launch
-    # This delay ensures configuration has completed before activation
-    activate_timer = TimerAction(
-        period=2.0,                # Wait 2.0 seconds
-        actions=[activate_event],  # Then trigger the activate event
+    # Register an event handler to activate the node when configuration completes
+    # This triggers the ACTIVATE transition only after successful configuration
+    # Robust against slow compute - waits for actual state change, not fixed time
+    activate_on_configure = RegisterEventHandler(
+        OnStateTransition(
+            target_lifecycle_node=system_manager_node,  # Watch this lifecycle node
+            start_state='configuring',                   # When transitioning from configuring
+            goal_state='inactive',                       # To inactive (configuration complete)
+            entities=[activate_event],                   # Trigger the activate event
+        )
     )
     
     # Return the complete launch description with all components
-    # The order matters: node must be declared before the events that affect it
+    # The order matters: node must be declared before the event handlers that watch it
     return LaunchDescription([
-        system_manager_node,  # Start the lifecycle node
-        configure_timer,      # Schedule automatic configuration
-        activate_timer,       # Schedule automatic activation
+        system_manager_node,      # Start the lifecycle node
+        configure_on_start,       # Configure when process starts
+        activate_on_configure,    # Activate when configuration completes
     ])

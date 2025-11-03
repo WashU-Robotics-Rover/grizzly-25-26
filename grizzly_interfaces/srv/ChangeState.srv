@@ -1,0 +1,10 @@
+# Service to change the operational state of the system
+# Request
+uint8 requested_state  # Desired state (use OperationalState constants)
+string reason          # Optional reason for state change
+
+---
+# Response
+bool success           # True if state change was accepted
+uint8 current_state    # Current state after the request
+string message         # Human-readable response message

@@ -33,8 +33,11 @@ find_package(nav_msgs REQUIRED)       # Navigation types (Odometry, Path, etc.)
 # Generate code for all custom message definitions
 # This creates libraries and Python modules that can be imported/used in code
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/PerceptionState.msg"  # List all .msg files here
-  DEPENDENCIES std_msgs geometry_msgs nav_msgs  # Types used within our messages
+  "msg/NodeStatus.msg"         # Node health status message
+  "msg/PerceptionState.msg"    # Perception subsystem state
+  "msg/OperationalState.msg"   # Global operational state machine
+  "srv/ChangeState.srv"        # Service to change operational state
+  DEPENDENCIES std_msgs geometry_msgs nav_msgs builtin_interfaces  # Types used within our messages
 )
 
 # --- EXPORT CONFIGURATION ---
