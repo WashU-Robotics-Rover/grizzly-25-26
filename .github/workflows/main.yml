@@ -66,14 +66,52 @@ jobs:
       #     colcon test --event-handlers console_direct+
       #     colcon test-result --verbose
 
-      - name: Run test_node from grizzly package
+      - name: Run test_node from grizzly package (detect "published")
         run: |
-          set -eo pipefail
+          set -euo pipefail
+
+          # Source workspace (avoid -u while sourcing)
           set +u
           source install/setup.bash
           source install/local_setup.bash
           set -u
-          ros2 launch grizzly_stack grizzly_minimal.launch.py
+
+          : > launch.out
+          ( ros2 launch grizzly_stack grizzly_minimal.launch.py > launch.out 2>&1 ) &
+          LAUNCH_PID=$!
+
+          echo "🔎 Waiting up to 120s for log message containing 'published'..."
+          if ! timeout 120s bash -c '
+            shopt -s nocasematch
+            while true; do
+              if ! kill -0 '"$LAUNCH_PID"' 2>/dev/null; then
+                echo "❌ Launch process exited early."
+                exit 2
+              fi
+              if grep -qi "published" launch.out; then
+                echo "✅ Found \"published\" in logs."
+                exit 0
+              fi
+              sleep 1
+            done
+          '; then
+            echo "❌ Timeout or failure—no 'published' found."
+            echo "Last 100 lines of log:"
+            tail -n 100 launch.out || true
+            kill "$LAUNCH_PID" 2>/dev/null || true
+            sleep 2
+            kill -9 "$LAUNCH_PID" 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "📄 Context from log:"
+          tail -n 50 launch.out || true
+
+          echo "🛑 Stopping launch..."
+          kill "$LAUNCH_PID" 2>/dev/null || true
+          sleep 2
+          kill -9 "$LAUNCH_PID" 2>/dev/null || true
+
 
   release:
     needs: build_and_test
