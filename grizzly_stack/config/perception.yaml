@@ -1,0 +1,44 @@
+---
+# Perception Node Configuration for Grizzly Robotics Stack
+#
+# This configuration file controls the test perception node behavior.
+# The perception node is a lifecycle-managed node that can be enabled/disabled
+# and activated/deactivated by the System Manager based on operational states.
+#
+# When to enable perception:
+# - AUTONOMOUS mode: Perception is required for autonomous navigation
+# - MANUAL mode: Perception may be enabled for operator assistance
+# - STANDBY mode: Perception is typically disabled to save resources
+#
+# Usage:
+#   - Set 'enabled: true' to allow the node to be activated
+#   - Set 'enabled: false' to prevent the node from activating
+#   - Adjust detection_rate_hz based on computational budget
+#   - Adjust confidence_threshold to filter low-confidence detections
+
+perception_node:
+  ros__parameters:
+    # Whether perception should be enabled (can be activated)
+    # Set to false to completely disable perception functionality
+    enabled: true
+    
+    # Detection processing rate in Hz
+    # Higher rates provide more frequent updates but use more CPU
+    # Typical values: 1-10 Hz for object detection, 20-30 Hz for tracking
+    detection_rate_hz: 2.0
+    
+    # Minimum confidence threshold for detections (0.0 to 1.0)
+    # Only detections with confidence >= this value are published
+    # Lower values: more detections but more false positives
+    # Higher values: fewer detections but higher quality
+    confidence_threshold: 0.5
+    
+    # Maximum detection range in meters
+    # Objects beyond this distance are ignored
+    # Adjust based on sensor capabilities and mission requirements
+    max_detection_range_m: 10.0
+    
+    # Sensor type identifier
+    # Used for logging and potential sensor-specific processing
+    # Common values: 'camera', 'lidar', 'radar', 'stereo', 'rgbd'
+    sensor_type: 'camera'

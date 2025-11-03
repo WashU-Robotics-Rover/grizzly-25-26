@@ -1,109 +1,140 @@
 """
-Minimal Launch File for Grizzly Rover System
+Grizzly Rover System Launch File
 
-This launch file starts the core system_manager lifecycle node and automatically
-transitions it through its lifecycle states (Configure -> Activate).
+This launch file starts the core system_manager lifecycle node and conditionally
+includes the perception node based on configuration.
 
 Lifecycle Management:
-- Uses event-driven state transitions based on actual state changes
-- Configures the node when it starts (OnProcessStart event)
-- Activates the node when configuration successfully completes (OnStateTransition event)
+- Uses a dedicated lifecycle_manager node for orchestration
+- Lifecycle manager waits for nodes to be ready, then transitions them
+- Event-based approach adapts to system performance (no fixed timers)
+- Robust and deterministic startup sequence
 
-This approach is robust against slow compute and timing variations.
+Conditional Node Loading:
+- Reads perception.yaml to check if perception is enabled
+- If enabled=true, includes and configures the perception node
+- If enabled=false, skips perception node entirely
 """
 
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler, EmitEvent
-from launch.event_handlers import OnProcessStart
-from launch_ros.actions import LifecycleNode
+from launch.actions import RegisterEventHandler
+from launch.event_handlers import OnProcessExit
+from launch_ros.actions import LifecycleNode, Node
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution
-from launch_ros.events.lifecycle import ChangeState
-from launch_ros.event_handlers import OnStateTransition
-from lifecycle_msgs.msg import Transition
+import yaml
+from ament_index_python.packages import get_package_share_directory
+import os
+
+
+def is_perception_enabled():
+    """
+    Check if perception node is enabled in the configuration file.
+    
+    Returns:
+        bool: True if perception is enabled, False otherwise
+    """
+    try:
+        package_share = get_package_share_directory('grizzly_stack')
+        perception_config_path = os.path.join(package_share, 'config', 'perception.yaml')
+        
+        with open(perception_config_path, 'r') as f:
+            config = yaml.safe_load(f)
+            
+        # Navigate the YAML structure to find the enabled parameter
+        if config and 'perception_node' in config:
+            params = config['perception_node'].get('ros__parameters', {})
+            return params.get('enabled', False)
+        
+        return False
+    except Exception as e:
+        # If we can't read the config, assume perception is disabled
+        print(f"Warning: Could not read perception config: {e}")
+        return False
 
 
 def generate_launch_description():
     """
-    Generate the launch description for the minimal Grizzly system.
+    Generate the launch description for the Grizzly system.
     
     Returns:
         LaunchDescription: A launch description containing the system_manager node
-                          and automatic lifecycle transition events.
+                          and optionally the perception node based on configuration.
     """
-    # Construct the path to the configuration file using ROS 2 package discovery
-    # FindPackageShare locates the installed package, then we join the path to the config file
-    config_file = PathJoinSubstitution([
-        FindPackageShare('grizzly_stack'),  # Find the grizzly_stack package install location
-        'config',                            # Navigate to the config directory
-        'core.yaml'                          # Specify the config file name
+    # Construct the path to the configuration files
+    core_config_file = PathJoinSubstitution([
+        FindPackageShare('grizzly_stack'),
+        'config',
+        'core.yaml'
+    ])
+    
+    perception_config_file = PathJoinSubstitution([
+        FindPackageShare('grizzly_stack'),
+        'config',
+        'perception.yaml'
     ])
     
     # Define the system_manager as a LifecycleNode
     # LifecycleNode requires explicit state transitions (unlike regular Node)
     system_manager_node = LifecycleNode(
-        package='grizzly_stack',           # The ROS 2 package containing this node
-        executable='system_manager',       # The executable name (from setup.py entry_points)
-        namespace='',                      # Empty namespace means node is at root level
-        name='system_manager',             # The node name (must match the name in the node code)
-        output='screen',                   # Print node output to the terminal
-        parameters=[config_file],          # Load parameters from the YAML config file
+        package='grizzly_stack',
+        executable='system_manager',
+        namespace='',
+        name='system_manager',
+        output='screen',
+        parameters=[core_config_file],
     )
     
-    # --- EVENT-DRIVEN LIFECYCLE TRANSITIONS ---
+    # --- EVENT-DRIVEN LIFECYCLE MANAGEMENT ---
+    # Use a dedicated lifecycle_manager node to orchestrate transitions
+    # This is more robust than timers as it waits for actual state changes
     
-    # Create an event to trigger the CONFIGURE transition
-    # This moves the node from Unconfigured -> Inactive state
-    # During this transition, the node allocates resources (publishers, etc.)
-    configure_event = EmitEvent(
-        event=ChangeState(
-            # Match the node by checking if 'system_manager' is in its name
-            lifecycle_node_matcher=lambda node: 'system_manager' in node.name,
-            # Specify which transition to trigger
-            transition_id=Transition.TRANSITION_CONFIGURE,
+    lifecycle_manager_node = Node(
+        package='grizzly_stack',
+        executable='lifecycle_manager',
+        name='lifecycle_manager',
+        output='screen',
+    )
+    
+    # Automatically shut down the lifecycle manager after it completes
+    # This keeps it from running unnecessarily after startup
+    shutdown_manager_on_exit = RegisterEventHandler(
+        OnProcessExit(
+            target_action=lifecycle_manager_node,
+            on_exit=lambda event, context: None,  # Just let it exit cleanly
         )
     )
     
-    # Create an event to trigger the ACTIVATE transition
-    # This moves the node from Inactive -> Active state
-    # During this transition, the node starts its timers and begins operation
-    activate_event = EmitEvent(
-        event=ChangeState(
-            # Match the node by checking if 'system_manager' is in its name
-            lifecycle_node_matcher=lambda node: 'system_manager' in node.name,
-            # Specify which transition to trigger
-            transition_id=Transition.TRANSITION_ACTIVATE,
+    # Build the launch description components list
+    launch_components = [
+        system_manager_node,
+        lifecycle_manager_node,
+        shutdown_manager_on_exit,
+    ]
+    
+    # === CONDITIONAL PERCEPTION NODE ===
+    # Check if perception is enabled in configuration
+    if is_perception_enabled():
+        print("✅ Perception enabled in config - including perception node")
+        
+        # Define the perception node
+        perception_node = LifecycleNode(
+            package='grizzly_stack',
+            executable='perception_node',
+            namespace='',
+            name='perception_node',
+            output='screen',
+            parameters=[perception_config_file],
         )
-    )
+        
+        # Add perception node to launch
+        # The lifecycle_manager will handle configuration automatically
+        launch_components.append(perception_node)
+        
+        # Note: Perception is configured by lifecycle_manager but NOT activated
+        # System Manager will activate it based on operational state transitions
+    else:
+        print("ℹ️  Perception disabled in config - skipping perception node")
     
-    # --- EVENT HANDLERS FOR AUTOMATIC STATE TRANSITIONS ---
-    
-    # Register an event handler to configure the node when it starts
-    # This triggers the CONFIGURE transition immediately after the process starts
-    # No fixed timing delay - responds to actual process start event
-    configure_on_start = RegisterEventHandler(
-        OnProcessStart(
-            target_action=system_manager_node,  # Watch for this node's process to start
-            on_start=[configure_event],         # When it starts, trigger configure
-        )
-    )
-    
-    # Register an event handler to activate the node when configuration completes
-    # This triggers the ACTIVATE transition only after successful configuration
-    # Robust against slow compute - waits for actual state change, not fixed time
-    activate_on_configure = RegisterEventHandler(
-        OnStateTransition(
-            target_lifecycle_node=system_manager_node,  # Watch this lifecycle node
-            start_state='configuring',                   # When transitioning from configuring
-            goal_state='inactive',                       # To inactive (configuration complete)
-            entities=[activate_event],                   # Trigger the activate event
-        )
-    )
-    
-    # Return the complete launch description with all components
-    # The order matters: node must be declared before the event handlers that watch it
-    return LaunchDescription([
-        system_manager_node,      # Start the lifecycle node
-        configure_on_start,       # Configure when process starts
-        activate_on_configure,    # Activate when configuration completes
-    ])
+    # Return the complete launch description
+    return LaunchDescription(launch_components)
