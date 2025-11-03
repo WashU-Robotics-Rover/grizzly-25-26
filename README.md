@@ -22,8 +22,11 @@ The Grizzly stack is designed as a modular, lifecycle-managed system for autonom
 The installer automatically downloads the latest pre-release from GitHub and builds it:
 
 ```bash
-# Run the installer
+# Download and build the latest release
 python3 installer.py
+
+# Launch the system (works on macOS/Linux/Windows)
+python3 run.py
 ```
 
 The installer will:
@@ -44,6 +47,10 @@ cd grizzly-25-26
 # Build based on your platform
 ./build.sh              # macOS (requires conda ros_env)
 ./install_grizzly.sh    # Linux (native ROS 2 Humble)
+colcon build            # Windows (with ROS 2 Humble sourced)
+
+# Launch the system
+python3 run.py          # Cross-platform
 ```
 
 ## Architecture
@@ -53,8 +60,9 @@ cd grizzly-25-26
 ```
 grizzly-25-26/
 ├── installer.py                 # Automated installer (downloads & builds releases)
+├── run.py                       # Cross-platform launch script (macOS/Linux/Windows)
 ├── build.sh                     # macOS build script (conda/robostack)
-├── run.sh                       # Launch script for macOS
+├── run.sh                       # macOS-specific launch script (called by run.py)
 ├── install_grizzly.sh          # Linux build script (native ROS 2)
 ├── README_INSTALL.md           # Release installation instructions
 ├── downloads/                   # Downloaded release assets
@@ -193,16 +201,28 @@ The `install_grizzly.sh` script:
 
 ### Launch the System
 
-**macOS (using convenience script):**
+**Cross-platform (recommended):**
 ```bash
-./run.sh
+# Works on macOS, Linux, and Windows
+python3 run.py
 ```
 
-**Manual launch (both platforms):**
+The `run.py` script automatically detects your platform and:
+- **macOS**: Uses `run.sh` with conda environment
+- **Linux**: Sources ROS 2 Humble from `/opt/ros/humble`
+- **Windows**: Sources ROS 2 Humble from standard Windows paths
+
+**Platform-specific scripts:**
+```bash
+./run.sh                # macOS only (uses conda)
+```
+
+**Manual launch (all platforms):**
 ```bash
 # Source the workspace first
 source install/setup.bash  # Linux
 source install/setup.zsh   # macOS
+call install\setup.bat     # Windows
 
 # Launch the minimal system
 ros2 launch grizzly_stack grizzly_minimal.launch.py
