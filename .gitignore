@@ -3,6 +3,9 @@ build/
 install/
 log/
 
+#GitHub releases
+downloads/
+
 # Python compiled files
 __pycache__/
 *.py[cod]
