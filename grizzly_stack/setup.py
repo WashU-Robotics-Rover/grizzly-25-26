@@ -19,7 +19,7 @@ setup(
     
     # Specify all Python packages to include
     # Main package + core subpackage (more subpackages like perception, planning, etc. to be added)
-    packages=[package_name, package_name + '.core'],
+    packages=[package_name, package_name + '.core', package_name + '.perception'],
     
     # Map package names to their directory locations
     # 'src' means the src directory is the root of grizzly_stack package
@@ -36,11 +36,13 @@ setup(
         
         # Install launch files to share/<package_name>/launch
         # Launch files define how to start multiple nodes with specific configurations
-        ('share/' + package_name + '/launch', ['launch/grizzly_minimal.launch.py']),
+        ('share/' + package_name + '/launch', [
+            'launch/grizzly_minimal.launch.py',
+        ]),
         
         # Install configuration files to share/<package_name>/config
         # YAML config files contain parameter values for nodes
-        ('share/' + package_name + '/config', ['config/core.yaml']),
+        ('share/' + package_name + '/config', ['config/core.yaml', 'config/perception.yaml']),
     ],
     
     # Python dependencies required by this package
@@ -63,8 +65,12 @@ setup(
             # --- CORE SUBSYSTEM ---
             # System health monitoring and coordination
             'system_manager = grizzly_stack.core.system_manager:main',
+            # Lifecycle management for node orchestration
+            'lifecycle_manager = grizzly_stack.core.lifecycle_manager:main',
             
             # --- PERCEPTION SUBSYSTEM ---
+            # Test perception node (lifecycle-managed template)
+            'perception_node = grizzly_stack.perception.perception_node:main',
             # Central sensor processing and state estimation
             'central_perception = grizzly_stack.perception.central_perception:main',
             
