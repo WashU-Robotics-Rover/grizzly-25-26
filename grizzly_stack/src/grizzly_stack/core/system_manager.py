@@ -11,6 +11,8 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from rclpy.lifecycle import Node as LifecycleNode
 from rclpy.lifecycle import TransitionCallbackReturn, State
+from grizzly_interfaces.msg import NodeStatus, OperationalState
+from grizzly_interfaces.srv import ChangeState
 
 
 class SystemManager(LifecycleNode):
@@ -46,6 +48,23 @@ class SystemManager(LifecycleNode):
         # These will be created in the lifecycle callbacks
         self._timer = None  # Timer for periodic health status publishing
         self._pub = None    # Publisher for the health status messages
+        self._state_pub = None  # Publisher for operational state
+        self._state_service = None  # Service for external state changes
+        
+        # Initialize operational state machine
+        self._current_state = OperationalState.STARTUP
+        self._state_history = []  # Track state transitions
+        
+        # Define valid state transitions (from_state -> [valid_to_states])
+        self._valid_transitions = {
+            OperationalState.STARTUP: [OperationalState.STANDBY, OperationalState.ERROR, OperationalState.EMERGENCY],
+            OperationalState.STANDBY: [OperationalState.AUTONOMOUS, OperationalState.MANUAL, OperationalState.SHUTDOWN, OperationalState.EMERGENCY],
+            OperationalState.AUTONOMOUS: [OperationalState.STANDBY, OperationalState.MANUAL, OperationalState.EMERGENCY, OperationalState.ERROR],
+            OperationalState.MANUAL: [OperationalState.STANDBY, OperationalState.AUTONOMOUS, OperationalState.EMERGENCY, OperationalState.ERROR],
+            OperationalState.EMERGENCY: [OperationalState.STANDBY],  # Can only return to standby after emergency
+            OperationalState.ERROR: [OperationalState.STANDBY, OperationalState.SHUTDOWN],
+            OperationalState.SHUTDOWN: []  # Terminal state
+        }
         
         self.get_logger().info('System Manager node created (unconfigured state)')
 
@@ -69,6 +88,18 @@ class SystemManager(LifecycleNode):
         # Topic: '/system/health', Message Type: String, Queue Size: 10
         # Publisher is created here but won't publish until we're in Active state
         self._pub = self.create_publisher(String, '/system/health', 10)
+        
+        # Create publisher for operational state
+        self._state_pub = self.create_publisher(OperationalState, '/system/state', 10)
+        
+        # Create service for external state changes
+        self._state_service = self.create_service(
+            ChangeState, 
+            '/system/change_state', 
+            self._handle_state_change_request
+        )
+        
+        self.get_logger().info('State machine initialized. Current state: STARTUP')
         
         return TransitionCallbackReturn.SUCCESS
 
@@ -169,8 +200,148 @@ class SystemManager(LifecycleNode):
         # Publish the health status message to '/system/health' topic
         self._pub.publish(msg)
         
+        # Publish current operational state
+        self._publish_state()
+        
         # Log that we published (useful for debugging)
         self.get_logger().info('Published health status.')
+    
+    def _handle_state_change_request(self, request, response):
+        """
+        Service callback to handle external state change requests.
+        
+        Args:
+            request: ChangeState.Request with requested_state and reason
+            response: ChangeState.Response with success, current_state, and message
+            
+        Returns:
+            response: Filled response object
+        """
+        requested_state = request.requested_state
+        reason = request.reason if request.reason else "No reason provided"
+        
+        self.get_logger().info(f'State change requested: {self._state_name(requested_state)} (reason: {reason})')
+        
+        # Validate the state transition
+        if self._is_valid_transition(requested_state):
+            # Record the transition in history
+            self._state_history.append({
+                'from': self._current_state,
+                'to': requested_state,
+                'timestamp': self.get_clock().now(),
+                'reason': reason
+            })
+            
+            # Perform the state change
+            old_state = self._current_state
+            self._current_state = requested_state
+            
+            # Call state transition callback
+            self._on_state_transition(old_state, requested_state)
+            
+            # Publish the new state immediately
+            self._publish_state()
+            
+            # Fill successful response
+            response.success = True
+            response.current_state = self._current_state
+            response.message = f'State changed from {self._state_name(old_state)} to {self._state_name(requested_state)}'
+            
+            self.get_logger().info(response.message)
+        else:
+            # Invalid transition - reject the request
+            response.success = False
+            response.current_state = self._current_state
+            response.message = f'Invalid transition from {self._state_name(self._current_state)} to {self._state_name(requested_state)}'
+            
+            self.get_logger().warn(response.message)
+        
+        return response
+    
+    def _is_valid_transition(self, new_state):
+        """
+        Check if transitioning to new_state is valid from current state.
+        
+        Args:
+            new_state: Requested target state
+            
+        Returns:
+            bool: True if transition is valid, False otherwise
+        """
+        # Allow staying in the same state (no-op)
+        if new_state == self._current_state:
+            return True
+        
+        # Check if the transition is in the valid transitions map
+        valid_states = self._valid_transitions.get(self._current_state, [])
+        return new_state in valid_states
+    
+    def _on_state_transition(self, old_state, new_state):
+        """
+        Called when a state transition occurs. Override or extend for custom behavior.
+        
+        Args:
+            old_state: Previous operational state
+            new_state: New operational state
+        """
+        # Log the transition
+        self.get_logger().info(f'State transition: {self._state_name(old_state)} -> {self._state_name(new_state)}')
+        
+        # Perform state-specific actions
+        if new_state == OperationalState.EMERGENCY:
+            self.get_logger().error('EMERGENCY STATE ACTIVATED!')
+            # TODO: Trigger emergency stop procedures
+            
+        elif new_state == OperationalState.AUTONOMOUS:
+            self.get_logger().info('Entering autonomous mode')
+            # TODO: Enable autonomous systems
+            
+        elif new_state == OperationalState.MANUAL:
+            self.get_logger().info('Entering manual control mode')
+            # TODO: Enable teleoperation
+            
+        elif new_state == OperationalState.STANDBY:
+            self.get_logger().info('Entering standby mode')
+            # TODO: Put systems in standby
+            
+        elif new_state == OperationalState.SHUTDOWN:
+            self.get_logger().info('Initiating shutdown sequence')
+            # TODO: Graceful shutdown of all systems
+    
+    def _publish_state(self):
+        """
+        Publish the current operational state to /system/state topic.
+        """
+        if self._state_pub is None:
+            return
+        
+        msg = OperationalState()
+        msg.state = self._current_state
+        msg.timestamp = self.get_clock().now().to_msg()
+        msg.description = self._state_name(self._current_state)
+        
+        self._state_pub.publish(msg)
+    
+    def _state_name(self, state):
+        """
+        Get human-readable name for a state constant.
+        
+        Args:
+            state: State constant value
+            
+        Returns:
+            str: Human-readable state name
+        """
+        state_names = {
+            OperationalState.STARTUP: 'STARTUP',
+            OperationalState.STANDBY: 'STANDBY',
+            OperationalState.AUTONOMOUS: 'AUTONOMOUS',
+            OperationalState.MANUAL: 'MANUAL',
+            OperationalState.EMERGENCY: 'EMERGENCY',
+            OperationalState.ERROR: 'ERROR',
+            OperationalState.SHUTDOWN: 'SHUTDOWN'
+        }
+        return state_names.get(state, f'UNKNOWN({state})')
 
 
 def main():
