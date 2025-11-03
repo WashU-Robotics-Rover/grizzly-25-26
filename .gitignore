@@ -6,6 +6,9 @@ log/
 #GitHub releases
 downloads/
 
+#version
+version.json
+
 #Tests
 htmlcov/
 .coverage
