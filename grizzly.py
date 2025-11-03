@@ -46,6 +46,7 @@ Commands:
   build        Build the workspace using platform-specific configuration
   run          Launch the Grizzly minimal system
   test         Run the test suite
+  update       Fetch and update from the latest GitHub commit on main
 
 Examples:
   ./grizzly.py install              # Download and build latest release
@@ -55,6 +56,7 @@ Examples:
   ./grizzly.py test                 # Run all tests
   ./grizzly.py test -v              # Run tests with verbose output
   ./grizzly.py test --coverage      # Run tests with coverage report
+  ./grizzly.py update               # Update repository from main branch
 
 Platform: {system}
             """.format(system=self.system)
@@ -109,6 +111,13 @@ Platform: {system}
         clean_parser.add_argument('--build', action='store_true',
                                  help='Clean only build artifacts (build, install, log)')
         
+        # Update command
+        update_parser = subparsers.add_parser('update', help='Fetch and update from latest GitHub commit on main')
+        update_parser.add_argument('--branch', default='main',
+                                  help='Branch to update from (default: main)')
+        update_parser.add_argument('--rebuild', action='store_true',
+                                  help='Rebuild after updating')
+        
         args = parser.parse_args()
         
         if not args.command:
@@ -126,6 +135,8 @@ Platform: {system}
             return self.cmd_test(args)
         elif args.command == 'clean':
             return self.cmd_clean(args)
+        elif args.command == 'update':
+            return self.cmd_update(args)
     
     # ========================================================================
     # INSTALL COMMAND
@@ -151,8 +162,7 @@ Platform: {system}
         print(f"Latest release: {name} ({tag})")
         
         # Check if already installed
-        self.downloads_dir.mkdir(exist_ok=True)
-        version_file = self.downloads_dir / "version.json"
+        version_file = self.workspace_root / "version.json"
         
         if not args.force and version_file.exists():
             try:
@@ -166,45 +176,104 @@ Platform: {system}
                     return 0
                 else:
                     print(f"Local version ({local_tag}) differs from latest ({tag})")
-                    print("Cleaning downloads directory...")
-                    self.clean_downloads()
             except Exception as e:
                 print(f"⚠️  Warning: Error reading version.json: {e}")
         
-        # Download release assets
-        assets = release.get("assets", [])
-        downloaded_files = []
+        # Create temporary directory for download and build
+        import tempfile
+        temp_dir = Path(tempfile.mkdtemp(prefix="grizzly_install_"))
+        print(f"📁 Using temporary directory: {temp_dir}\n")
         
-        if assets:
-            for asset in assets:
-                url = asset["browser_download_url"]
-                filename = self.downloads_dir / asset["name"]
-                self.download_file(url, filename)
+        try:
+            # Download release assets to temp directory
+            assets = release.get("assets", [])
+            downloaded_files = []
+            
+            if assets:
+                for asset in assets:
+                    url = asset["browser_download_url"]
+                    filename = temp_dir / asset["name"]
+                    self.download_file(url, filename)
+                    downloaded_files.append(filename)
+            else:
+                # Fallback to source zip
+                source_url = release.get("zipball_url")
+                filename = temp_dir / f"grizzly_{tag}.zip"
+                self.download_file(source_url, filename)
                 downloaded_files.append(filename)
-        else:
-            # Fallback to source zip
-            source_url = release.get("zipball_url")
-            filename = self.downloads_dir / f"grizzly_{tag}.zip"
-            self.download_file(source_url, filename)
-            downloaded_files.append(filename)
-        
-        print("\n✅ Download complete.")
-        
-        # Extract archives
-        extract_path = self.extract_archives(downloaded_files)
-        
-        # Find source directory
-        src_path = Path(extract_path) / "src"
-        if not src_path.exists():
-            print(f"❌ Error: src directory not found in {extract_path}")
-            return 1
-        
-        # Build the workspace
-        print(f"\n{'='*70}")
-        print(f"  Building Workspace")
-        print(f"{'='*70}\n")
-        
-        return self.build_workspace(src_path)
+            
+            print("\n✅ Download complete.")
+            
+            # Extract archives to temp directory
+            print(f"\n📦 Extracting to temporary directory...")
+            extract_path = self.extract_archives_to_path(downloaded_files, temp_dir)
+            
+            # Find source directory
+            src_path = self.find_source_directory(extract_path)
+            if not src_path:
+                print(f"❌ Error: Could not find source directory in {extract_path}")
+                return 1
+            
+            print(f"✅ Found source directory: {src_path}\n")
+            
+            # Build the workspace in temp directory
+            print(f"\n{'='*70}")
+            print(f"  Building Workspace")
+            print(f"{'='*70}\n")
+            
+            build_result = self.build_workspace(src_path)
+            if build_result != 0:
+                print("\n❌ Build failed")
+                return 1
+            
+            # Copy install directory to workspace
+            print(f"\n{'='*70}")
+            print(f"  Installing to Workspace")
+            print(f"{'='*70}\n")
+            
+            temp_install_dir = src_path / "install"
+            if not temp_install_dir.exists():
+                print(f"❌ Error: Built install directory not found at {temp_install_dir}")
+                return 1
+            
+            # Remove old install directory if it exists
+            if self.install_dir.exists():
+                print(f"🧹 Removing old install directory...")
+                shutil.rmtree(self.install_dir)
+            
+            # Copy new install directory
+            print(f"📦 Copying install directory to workspace...")
+            shutil.copytree(temp_install_dir, self.install_dir)
+            print(f"✅ Installed to: {self.install_dir}")
+            
+            # Save version info
+            print(f"\n💾 Saving version information...")
+            with open(version_file, 'w') as f:
+                json.dump({
+                    "version": tag,
+                    "name": name,
+                    "installed_at": subprocess.run(
+                        ["date", "+%Y-%m-%d %H:%M:%S"],
+                        capture_output=True,
+                        text=True
+                    ).stdout.strip()
+                }, f, indent=2)
+            print(f"✅ Version saved: {tag}")
+            
+            print(f"\n{'='*70}")
+            print("✅ Installation complete")
+            print(f"{'='*70}\n")
+            
+            return 0
+            
+        finally:
+            # Clean up temporary directory
+            print(f"\n🧹 Cleaning up temporary directory...")
+            try:
+                shutil.rmtree(temp_dir)
+                print(f"✅ Temporary directory removed")
+            except Exception as e:
+                print(f"⚠️  Warning: Could not remove temp directory: {e}")
     
     def get_latest_release(self, repo):
         """Fetch the latest release from GitHub API."""
@@ -261,6 +330,63 @@ Platform: {system}
                     print(f"❌ Error extracting {filepath}: {e}")
         
         return extract_path
+    
+    def extract_archives_to_path(self, files, extract_path):
+        """Extract tar.gz and zip files to a specific path."""
+        for filepath in files:
+            filepath = Path(filepath)
+            if filepath.suffix in ['.gz', '.tgz'] or str(filepath).endswith('.tar.gz'):
+                print(f"📦 Extracting {filepath.name}...")
+                try:
+                    with tarfile.open(filepath, 'r:gz') as tar:
+                        tar.extractall(path=extract_path)
+                    print(f"✅ Extracted {filepath.name}")
+                except Exception as e:
+                    print(f"❌ Error extracting {filepath}: {e}")
+                    raise
+            elif filepath.suffix == '.zip':
+                print(f"📦 Extracting {filepath.name}...")
+                try:
+                    import zipfile
+                    with zipfile.ZipFile(filepath, 'r') as zip_ref:
+                        zip_ref.extractall(extract_path)
+                    print(f"✅ Extracted {filepath.name}")
+                except Exception as e:
+                    print(f"❌ Error extracting {filepath}: {e}")
+                    raise
+        
+        return extract_path
+    
+    def find_source_directory(self, base_path):
+        """Find the source directory containing ROS packages."""
+        base_path = Path(base_path)
+        
+        # Check if base_path itself is the source directory
+        if (base_path / "grizzly_stack").exists() or (base_path / "grizzly_interfaces").exists():
+            return base_path
+        
+        # Check for src subdirectory
+        src_path = base_path / "src"
+        if src_path.exists():
+            return src_path
+        
+        # Check subdirectories (for GitHub zipball structure like "WashU-Robotics-Rover-grizzly-25-26-abc123")
+        for item in base_path.iterdir():
+            if item.is_dir():
+                # Check if this directory contains packages
+                if (item / "grizzly_stack").exists() or (item / "grizzly_interfaces").exists():
+                    return item
+                # Check if this directory has a src subdirectory
+                src_candidate = item / "src"
+                if src_candidate.exists():
+                    return src_candidate
+                # Recursively check one level deeper
+                for subitem in item.iterdir():
+                    if subitem.is_dir():
+                        if (subitem / "grizzly_stack").exists() or (subitem / "grizzly_interfaces").exists():
+                            return subitem
+        
+        return None
     
     def clean_downloads(self):
         """Clean the downloads directory."""
@@ -573,6 +699,133 @@ source install/setup.zsh
         print(f"{'='*70}\n")
         
         return 0
+    
+    # ========================================================================
+    # UPDATE COMMAND
+    # ========================================================================
+    
+    def cmd_update(self, args):
+        """Update command - fetch and update from latest GitHub commit on main."""
+        print(f"\n{'='*70}")
+        print(f"  Grizzly Update")
+        print(f"{'='*70}")
+        print(f"Workspace: {self.workspace_root}")
+        print(f"Branch: {args.branch}")
+        print(f"{'='*70}\n")
+        
+        # Check if we're in a git repository
+        git_dir = self.workspace_root / ".git"
+        if not git_dir.exists():
+            print("❌ Error: Not a git repository")
+            print("   This command only works in a git repository.")
+            return 1
+        
+        try:
+            # Save current branch
+            print("📍 Saving current branch...")
+            result = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                cwd=self.workspace_root,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            current_branch = result.stdout.strip()
+            print(f"   Current branch: {current_branch}")
+            
+            # Fetch latest changes
+            print(f"\n📥 Fetching latest changes from origin...")
+            subprocess.run(
+                ["git", "fetch", "origin"],
+                cwd=self.workspace_root,
+                check=True
+            )
+            print("✅ Fetch complete")
+            
+            # Check for uncommitted changes
+            print(f"\n🔍 Checking for uncommitted changes...")
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=self.workspace_root,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            
+            has_changes = bool(result.stdout.strip())
+            if has_changes:
+                print("⚠️  Warning: You have uncommitted changes")
+                print("\nUncommitted changes:")
+                print(result.stdout)
+                
+                response = input("\nDo you want to stash these changes and continue? (y/n): ")
+                if response.lower() != 'y':
+                    print("\n❌ Update cancelled")
+                    return 1
+                
+                print("\n📦 Stashing changes...")
+                subprocess.run(
+                    ["git", "stash", "push", "-m", f"Auto-stash before update to {args.branch}"],
+                    cwd=self.workspace_root,
+                    check=True
+                )
+                print("✅ Changes stashed")
+            
+            # Pull latest changes from specified branch
+            print(f"\n⬇️  Pulling latest changes from {args.branch}...")
+            subprocess.run(
+                ["git", "pull", "origin", args.branch],
+                cwd=self.workspace_root,
+                check=True
+            )
+            print("✅ Pull complete")
+            
+            # Show what changed
+            print(f"\n📊 Recent commits:")
+            subprocess.run(
+                ["git", "log", "--oneline", "-5"],
+                cwd=self.workspace_root
+            )
+            
+            # Optionally rebuild
+            if args.rebuild:
+                print(f"\n{'='*70}")
+                print("  Rebuilding workspace...")
+                print(f"{'='*70}\n")
+                
+                # Create a mock args object for build
+                class BuildArgs:
+                    clean = False
+                    release = False
+                    no_rosdep = False
+                    symlink_install = False
+                    packages_select = None
+                
+                build_result = self.cmd_build(BuildArgs())
+                if build_result != 0:
+                    print("\n❌ Build failed")
+                    return 1
+            
+            # Summary
+            print(f"\n{'='*70}")
+            print("✅ Update complete")
+            if has_changes:
+                print("\n💡 Your changes were stashed. To restore them:")
+                print("   git stash pop")
+            if not args.rebuild:
+                print("\n💡 To rebuild the workspace:")
+                print("   ./grizzly.py build")
+            print(f"{'='*70}\n")
+            
+            return 0
+            
+        except subprocess.CalledProcessError as e:
+            print(f"\n❌ Git command failed: {e}")
+            print("\nPlease resolve any conflicts and try again.")
+            return 1
+        except Exception as e:
+            print(f"\n❌ Error during update: {e}")
+            return 1
     
     # ========================================================================
     # RUN COMMAND
