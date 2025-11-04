@@ -301,34 +301,34 @@ class SystemManager(LifecycleNode):
         if new_state == OperationalState.EMERGENCY:
             self.get_logger().error('EMERGENCY STATE ACTIVATED!')
             # Deactivate all operational nodes immediately
-            self._deactivate_lifecycle_nodes(['perception_node'])
+            self._deactivate_lifecycle_nodes(['perception_node', 'planner_node', 'control_node'])
             # TODO: Trigger emergency stop procedures for other subsystems
             
         elif new_state == OperationalState.AUTONOMOUS:
-            self.get_logger().info('Entering autonomous mode - Activating perception')
-            # Activate perception for autonomous navigation
-            self._activate_lifecycle_nodes(['perception_node'])
-            # TODO: Activate navigation, planning, and other autonomous subsystems
+            self.get_logger().info('Entering autonomous mode - Activating perception, planner, and control')
+            # Activate perception, planner, and control for autonomous navigation
+            self._activate_lifecycle_nodes(['perception_node', 'planner_node', 'control_node'])
+            # TODO: Activate navigation and other autonomous subsystems
             
         elif new_state == OperationalState.MANUAL:
             self.get_logger().info('Entering manual control mode')
-            # Perception can assist operator but not required
-            # Keep perception active if coming from autonomous, or activate if coming from standby
+            # Perception can assist operator, planner may be used for assisted navigation
+            # Control is needed to execute operator commands
+            # Keep nodes active if coming from autonomous, or activate if coming from standby
             if old_state == OperationalState.STANDBY:
-                self._activate_lifecycle_nodes(['perception_node'])
+                self._activate_lifecycle_nodes(['perception_node', 'planner_node', 'control_node'])
             # TODO: Activate teleoperation subsystems
             
         elif new_state == OperationalState.STANDBY:
             self.get_logger().info('Entering standby mode - Deactivating subsystems')
             # Deactivate operational nodes to save resources
-            self._deactivate_lifecycle_nodes(['perception_node'])
-            # TODO: Deactivate navigation, planning, and teleoperation subsystems
+            self._deactivate_lifecycle_nodes(['perception_node', 'planner_node', 'control_node'])
+            # TODO: Deactivate navigation and teleoperation subsystems
             
         elif new_state == OperationalState.SHUTDOWN:
             self.get_logger().info('Initiating shutdown sequence')
             # Deactivate all managed nodes
             self._deactivate_lifecycle_nodes(self._managed_nodes.copy())
-            # TODO: Graceful shutdown of all systems
     
     def _publish_state(self):
         """

@@ -62,6 +62,38 @@ class LifecycleManager(Node):
         # Clean up the test client
         self.destroy_client(perception_client)
         
+        # Check if planner node is available
+        planner_client = self.create_client(
+            GetState,
+            '/planner_node/get_state'
+        )
+        
+        if planner_client.wait_for_service(timeout_sec=2.0):
+            self.get_logger().info('Planner node detected - adding to sequence')
+            sequence.append(('planner_node', 'inactive', 'Configure Planner Node'))
+            # Note: planner_node stays in inactive, system_manager will activate it
+        else:
+            self.get_logger().info('Planner node not detected - skipping')
+        
+        # Clean up the test client
+        self.destroy_client(planner_client)
+        
+        # Check if control node is available
+        control_client = self.create_client(
+            GetState,
+            '/control_node/get_state'
+        )
+        
+        if control_client.wait_for_service(timeout_sec=2.0):
+            self.get_logger().info('Control node detected - adding to sequence')
+            sequence.append(('control_node', 'inactive', 'Configure Control Node'))
+            # Note: control_node stays in inactive, system_manager will activate it
+        else:
+            self.get_logger().info('Control node not detected - skipping')
+        
+        # Clean up the test client
+        self.destroy_client(control_client)
+        
         return sequence
         
     def wait_for_node(self, node_name, timeout_sec=30.0):
