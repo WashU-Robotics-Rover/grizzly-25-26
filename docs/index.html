@@ -19,27 +19,38 @@
       subMaxLevel: 3,
       auto2top: true,
       coverpage: false,
+      alias: {
+        '/.*/_sidebar.md': '/_sidebar.md'
+      },
+      mergeNavbar: true,
       search: {
         maxAge: 86400000, // 1 day
         paths: 'auto',
         placeholder: 'Search documentation...',
         noData: 'No results found',
-        depth: 6
+        depth: 6,
+        namespace: 'grizzly-25-26'
       },
       pagination: {
-        previousText: 'Previous',
-        nextText: 'Next',
+        previousText: '← Previous',
+        nextText: 'Next →',
         crossChapter: true,
         crossChapterText: true
       },
+      themeColor: '#42b983',
       plugins: [
         function(hook, vm) {
           hook.beforeEach(function(html) {
             // Add edit link at the bottom of each page
             return html + '\n\n---\n\n' +
-              '<div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eaecef;">' +
-              '<a href="' + vm.config.repo + '/blob/main/' + vm.route.file + '" target="_blank">' +
+              '<div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eaecef; color: #6a737d;">' +
+              '<a href="' + vm.config.repo + '/blob/main/docs/' + vm.route.file + '" target="_blank" style="text-decoration: none; color: #42b983;">' +
               '📝 Edit this page on GitHub</a></div>';
+          });
+          
+          // Add footer with project info
+          hook.afterEach(function(html) {
+            return html;
           });
         }
       ]
