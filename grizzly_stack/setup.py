@@ -42,7 +42,13 @@ setup(
         
         # Install configuration files to share/<package_name>/config
         # YAML config files contain parameter values for nodes
-        ('share/' + package_name + '/config', ['config/core.yaml', 'config/perception.yaml', 'config/planner.yaml', 'config/control.yaml']),
+        ('share/' + package_name + '/config', [
+            'config/core.yaml',
+            'config/perception.yaml',
+            'config/planner.yaml',
+            'config/control.yaml',
+            'config/layers.yaml',
+        ]),
     ],
     
     # Python dependencies required by this package

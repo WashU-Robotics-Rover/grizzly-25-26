@@ -11,10 +11,10 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from rclpy.lifecycle import Node as LifecycleNode
 from rclpy.lifecycle import TransitionCallbackReturn, State
-from grizzly_interfaces.msg import NodeStatus, OperationalState
+from grizzly_interfaces.msg import OperationalState
 from grizzly_interfaces.srv import ChangeState
-from lifecycle_msgs.srv import ChangeState as LifecycleChangeState, GetState
-from lifecycle_msgs.msg import Transition
+
+from .layer_manager import LayerManager
 
 
 class SystemManager(LifecycleNode):
@@ -57,10 +57,13 @@ class SystemManager(LifecycleNode):
         self._current_state = OperationalState.STARTUP
         self._state_history = []  # Track state transitions
         
-        # Lifecycle node management
-        self._lifecycle_clients = {}  # Store lifecycle service clients for managed nodes
-        self._managed_nodes = []  # List of nodes under lifecycle management
-        self._node_states = {}  # Track the lifecycle state of each managed node
+        # Initialize layer manager for managing nodes by layer
+        # This prevents the system manager from becoming bloated as more nodes are added
+        self._layer_manager = LayerManager(self)
+        
+        # Track node states for layer manager initialization
+        # These will be populated by the lifecycle manager during startup
+        self._node_states = {}
         
         # Define valid state transitions (from_state -> [valid_to_states])
         self._valid_transitions = {
@@ -107,6 +110,18 @@ class SystemManager(LifecycleNode):
         )
         
         self.get_logger().info('State machine initialized. Current state: STARTUP')
+        
+        # Initialize layer manager with node states from lifecycle manager
+        # The lifecycle manager configures nodes to 'inactive' state during startup
+        # Get all nodes from all layers and initialize them to 'inactive'
+        initial_node_states = {}
+        for layer_name in self._layer_manager.get_all_layers():
+            layer_nodes = self._layer_manager.get_layer_nodes(layer_name)
+            for node_name in layer_nodes:
+                initial_node_states[node_name] = 'inactive'
+        
+        self._layer_manager.initialize_node_states(initial_node_states)
+        self._node_states.update(initial_node_states)
         
         return TransitionCallbackReturn.SUCCESS
 
@@ -287,8 +302,9 @@ class SystemManager(LifecycleNode):
         """
         Called when a state transition occurs. Override or extend for custom behavior.
         
-        This method manages lifecycle nodes based on operational state transitions,
-        activating and deactivating subsystems as needed.
+        This method delegates layer management to the layer manager, which handles
+        lifecycle transitions for nodes organized by layers. This prevents the system
+        manager from becoming bloated as more nodes are added.
         
         Args:
             old_state: Previous operational state
@@ -297,38 +313,10 @@ class SystemManager(LifecycleNode):
         # Log the transition
         self.get_logger().info(f'State transition: {self._state_name(old_state)} -> {self._state_name(new_state)}')
         
-        # Perform state-specific actions and manage lifecycle nodes
-        if new_state == OperationalState.EMERGENCY:
-            self.get_logger().error('EMERGENCY STATE ACTIVATED!')
-            # Deactivate all operational nodes immediately
-            self._deactivate_lifecycle_nodes(['perception_node', 'planner_node', 'control_node'])
-            # TODO: Trigger emergency stop procedures for other subsystems
-            
-        elif new_state == OperationalState.AUTONOMOUS:
-            self.get_logger().info('Entering autonomous mode - Activating perception, planner, and control')
-            # Activate perception, planner, and control for autonomous navigation
-            self._activate_lifecycle_nodes(['perception_node', 'planner_node', 'control_node'])
-            # TODO: Activate navigation and other autonomous subsystems
-            
-        elif new_state == OperationalState.MANUAL:
-            self.get_logger().info('Entering manual control mode')
-            # Perception can assist operator, planner may be used for assisted navigation
-            # Control is needed to execute operator commands
-            # Keep nodes active if coming from autonomous, or activate if coming from standby
-            if old_state == OperationalState.STANDBY:
-                self._activate_lifecycle_nodes(['perception_node', 'planner_node', 'control_node'])
-            # TODO: Activate teleoperation subsystems
-            
-        elif new_state == OperationalState.STANDBY:
-            self.get_logger().info('Entering standby mode - Deactivating subsystems')
-            # Deactivate operational nodes to save resources
-            self._deactivate_lifecycle_nodes(['perception_node', 'planner_node', 'control_node'])
-            # TODO: Deactivate navigation and teleoperation subsystems
-            
-        elif new_state == OperationalState.SHUTDOWN:
-            self.get_logger().info('Initiating shutdown sequence')
-            # Deactivate all managed nodes
-            self._deactivate_lifecycle_nodes(self._managed_nodes.copy())
+        # Delegate layer management to layer manager
+        # The layer manager determines which layers should be active/inactive
+        # based on the operational state and manages all nodes in those layers
+        self._layer_manager.handle_state_transition(old_state, new_state)
     
     def _publish_state(self):
         """
@@ -364,347 +352,6 @@ class SystemManager(LifecycleNode):
             OperationalState.SHUTDOWN: 'SHUTDOWN'
         }
         return state_names.get(state, f'UNKNOWN({state})')
-    
-    # === Lifecycle Node Management Methods ===
-    
-    def _get_lifecycle_client(self, node_name):
-        """
-        Get or create a lifecycle change state client for a managed node.
-        
-        Args:
-            node_name: Name of the lifecycle node to manage
-            
-        Returns:
-            Client object for lifecycle state transitions
-        """
-        if node_name not in self._lifecycle_clients:
-            service_name = f'/{node_name}/change_state'
-            self._lifecycle_clients[node_name] = self.create_client(
-                LifecycleChangeState,
-                service_name
-            )
-            self.get_logger().debug(f'Created lifecycle client for {node_name}')
-        
-        return self._lifecycle_clients[node_name]
-    
-    def _configure_lifecycle_node(self, node_name, timeout_sec=2.0):
-        """
-        Configure a lifecycle node (Unconfigured -> Inactive).
-        
-        This method makes an async call without blocking.
-        
-        Args:
-            node_name: Name of the lifecycle node to configure
-            timeout_sec: Timeout for service availability
-        """
-        client = self._get_lifecycle_client(node_name)
-        
-        if not client.wait_for_service(timeout_sec=timeout_sec):
-            self.get_logger().warn(
-                f'Lifecycle service for {node_name} not available after {timeout_sec}s'
-            )
-            return
-        
-        request = LifecycleChangeState.Request()
-        request.transition.id = Transition.TRANSITION_CONFIGURE
-        
-        self.get_logger().info(f'Requesting configuration of {node_name}...')
-        
-        # Make async call with callback
-        future = client.call_async(request)
-        future.add_done_callback(
-            lambda f: self._handle_configure_response(f, node_name)
-        )
-    
-    def _handle_configure_response(self, future, node_name):
-        """Handle the response from lifecycle configuration request."""
-        try:
-            response = future.result()
-            if response and response.success:
-                self.get_logger().info(f'✅ Successfully configured {node_name}')
-                self._node_states[node_name] = 'inactive'  # Track state
-                # Now activate the node since configuration was triggered by activation request
-                self.get_logger().info(f'Now activating {node_name}...')
-                self._activate_lifecycle_node(node_name)
-            else:
-                self.get_logger().error(f'❌ Failed to configure {node_name}')
-        except Exception as e:
-            self.get_logger().error(f'Exception while configuring {node_name}: {e}')
-    
-    def _query_node_state(self, node_name, timeout_sec=2.0):
-        """
-        Query the actual current state of a lifecycle node.
-        
-        ⚠️ WARNING: This method is DEPRECATED and should NOT be used!
-        
-        This method uses rclpy.spin_until_future_complete() which causes DEADLOCK
-        when called from within a service callback context (like _handle_state_change_request).
-        The node cannot process the future because it's blocked waiting for itself.
-        
-        Instead, use the cached state in self._node_states which is maintained by
-        lifecycle transition callbacks.
-        
-        Args:
-            node_name: Name of the lifecycle node
-            timeout_sec: Timeout for service call
-            
-        Returns:
-            str: Current state label ('unconfigured', 'inactive', 'active', etc.)
-                 or 'unknown' if query fails
-        """
-        # Create a GetState service client
-        get_state_service = f'/{node_name}/get_state'
-        client = self.create_client(GetState, get_state_service)
-        
-        if not client.wait_for_service(timeout_sec=timeout_sec):
-            self.get_logger().warn(
-                f'GetState service for {node_name} not available after {timeout_sec}s'
-            )
-            return 'unknown'
-        
-        request = GetState.Request()
-        future = client.call_async(request)
-        
-        # ⚠️ DEADLOCK WARNING: This will hang if called from a callback!
-        rclpy.spin_until_future_complete(self, future, timeout_sec=timeout_sec)
-        
-        if future.result() is not None:
-            state_label = future.result().current_state.label
-            self.get_logger().debug(f'Queried state of {node_name}: {state_label}')
-            # Update our cached state
-            self._node_states[node_name] = state_label
-            return state_label
-        else:
-            self.get_logger().warn(f'Failed to query state of {node_name}')
-            return 'unknown'
-    
-    def _activate_lifecycle_node(self, node_name, timeout_sec=2.0):
-        """
-        Activate a lifecycle node (Inactive -> Active).
-        
-        This method makes an async call without blocking. The result is handled
-        via callback to avoid deadlock issues.
-        
-        Note: We rely on the cached state from lifecycle_manager initialization.
-        If the node is unconfigured, we configure it first. The lifecycle system
-        will reject invalid transitions, so we don't need to query state here
-        (which would cause deadlock when called from a callback context).
-        
-        Args:
-            node_name: Name of the lifecycle node to activate
-            timeout_sec: Timeout for service availability check
-        """
-        # Use cached state if available (populated by lifecycle_manager)
-        cached_state = self._node_states.get(node_name, 'inactive')
-        
-        # If cached state shows already active, skip
-        if cached_state == 'active':
-            self.get_logger().info(
-                f'Skipping activation of {node_name} - cached state shows already active'
-            )
-            return
-        
-        # If node is unconfigured, configure it first
-        if cached_state == 'unconfigured':
-            self.get_logger().info(
-                f'{node_name} is in unconfigured state - configuring first'
-            )
-            self._configure_lifecycle_node(node_name, timeout_sec)
-            # Note: The configure callback will trigger activation
-            return
-        
-        client = self._get_lifecycle_client(node_name)
-        
-        if not client.wait_for_service(timeout_sec=timeout_sec):
-            self.get_logger().warn(
-                f'Lifecycle service for {node_name} not available after {timeout_sec}s'
-            )
-            return
-        
-        request = LifecycleChangeState.Request()
-        request.transition.id = Transition.TRANSITION_ACTIVATE
-        
-        self.get_logger().info(f'Requesting activation of {node_name}...')
-        
-        # Make async call with callback
-        future = client.call_async(request)
-        future.add_done_callback(
-            lambda f: self._handle_activate_response(f, node_name)
-        )
-    
-    def _handle_activate_response(self, future, node_name):
-        """Handle the response from lifecycle activation request."""
-        try:
-            response = future.result()
-            if response and response.success:
-                self.get_logger().info(f'✅ Successfully activated {node_name}')
-                self._node_states[node_name] = 'active'  # Track state
-                if node_name not in self._managed_nodes:
-                    self._managed_nodes.append(node_name)
-            else:
-                self.get_logger().error(f'❌ Failed to activate {node_name}')
-        except Exception as e:
-            self.get_logger().error(f'Exception while activating {node_name}: {e}')
-    
-    def _configure_lifecycle_node(self, node_name, timeout_sec=2.0):
-        """
-        Configure a lifecycle node (Unconfigured -> Inactive).
-        
-        This method makes an async call without blocking. After successful configuration,
-        it will automatically trigger activation if that was the original intent.
-        
-        Args:
-            node_name: Name of the lifecycle node to configure
-            timeout_sec: Timeout for service availability check
-        """
-        client = self._get_lifecycle_client(node_name)
-        
-        if not client.wait_for_service(timeout_sec=timeout_sec):
-            self.get_logger().warn(
-                f'Lifecycle service for {node_name} not available after {timeout_sec}s'
-            )
-            return
-        
-        request = LifecycleChangeState.Request()
-        request.transition.id = Transition.TRANSITION_CONFIGURE
-        
-        self.get_logger().info(f'Requesting configuration of {node_name}...')
-        
-        # Make async call with callback
-        future = client.call_async(request)
-        future.add_done_callback(
-            lambda f: self._handle_configure_response(f, node_name)
-        )
-    
-    def _handle_configure_response(self, future, node_name):
-        """Handle the response from lifecycle configuration request."""
-        try:
-            response = future.result()
-            if response and response.success:
-                self.get_logger().info(f'✅ Successfully configured {node_name}')
-                self._node_states[node_name] = 'inactive'  # Track state
-                # Now activate the node since configuration was triggered by activation request
-                self.get_logger().info(f'Now activating {node_name}...')
-                self._activate_lifecycle_node(node_name)
-            else:
-                self.get_logger().error(f'❌ Failed to configure {node_name}')
-        except Exception as e:
-            self.get_logger().error(f'Exception while configuring {node_name}: {e}')
-    
-    def _deactivate_lifecycle_node(self, node_name, timeout_sec=2.0):
-        """
-        Deactivate a lifecycle node (Active -> Inactive).
-        
-        This method makes an async call without blocking. We use cached state
-        instead of querying to avoid deadlock when called from callback context.
-        The lifecycle system will reject invalid transitions if needed.
-        
-        Args:
-            node_name: Name of the lifecycle node to deactivate
-            timeout_sec: Timeout for service availability check
-        """
-        # Use cached state to avoid deadlock
-        # Default to 'inactive' since lifecycle_manager configures nodes to inactive state
-        cached_state = self._node_states.get(node_name, 'inactive')
-        
-        if cached_state != 'active':
-            self.get_logger().info(
-                f'Skipping deactivation of {node_name} - cached state is {cached_state} (not active)'
-            )
-            return
-        
-        client = self._get_lifecycle_client(node_name)
-        
-        if not client.wait_for_service(timeout_sec=timeout_sec):
-            self.get_logger().warn(
-                f'Lifecycle service for {node_name} not available after {timeout_sec}s'
-            )
-            return
-        
-        request = LifecycleChangeState.Request()
-        request.transition.id = Transition.TRANSITION_DEACTIVATE
-        
-        self.get_logger().info(f'Requesting deactivation of {node_name}...')
-        
-        # Make async call with callback
-        future = client.call_async(request)
-        future.add_done_callback(
-            lambda f: self._handle_deactivate_response(f, node_name)
-        )
-    
-    def _handle_deactivate_response(self, future, node_name):
-        """Handle the response from lifecycle deactivation request."""
-        try:
-            response = future.result()
-            if response and response.success:
-                self.get_logger().info(f'✅ Successfully deactivated {node_name}')
-                self._node_states[node_name] = 'inactive'  # Track state
-            else:
-                self.get_logger().error(f'❌ Failed to deactivate {node_name}')
-        except Exception as e:
-            self.get_logger().error(f'Exception while deactivating {node_name}: {e}')
-    
-    def _cleanup_lifecycle_node(self, node_name, timeout_sec=2.0):
-        """
-        Cleanup a lifecycle node (Inactive -> Unconfigured).
-        
-        This method makes an async call without blocking.
-        
-        Args:
-            node_name: Name of the lifecycle node to cleanup
-            timeout_sec: Timeout for service availability
-        """
-        client = self._get_lifecycle_client(node_name)
-        
-        if not client.wait_for_service(timeout_sec=timeout_sec):
-            self.get_logger().warn(
-                f'Lifecycle service for {node_name} not available after {timeout_sec}s'
-            )
-            return
-        
-        request = LifecycleChangeState.Request()
-        request.transition.id = Transition.TRANSITION_CLEANUP
-        
-        self.get_logger().info(f'Requesting cleanup of {node_name}...')
-        
-        # Make async call with callback
-        future = client.call_async(request)
-        future.add_done_callback(
-            lambda f: self._handle_cleanup_response(f, node_name)
-        )
-    
-    def _handle_cleanup_response(self, future, node_name):
-        """Handle the response from lifecycle cleanup request."""
-        try:
-            response = future.result()
-            if response and response.success:
-                self.get_logger().info(f'✅ Successfully cleaned up {node_name}')
-                if node_name in self._managed_nodes:
-                    self._managed_nodes.remove(node_name)
-            else:
-                self.get_logger().error(f'❌ Failed to cleanup {node_name}')
-        except Exception as e:
-            self.get_logger().error(f'Exception while cleaning up {node_name}: {e}')
-    
-    def _activate_lifecycle_nodes(self, node_names):
-        """
-        Activate multiple lifecycle nodes.
-        
-        Args:
-            node_names: List of node names to activate
-        """
-        for node_name in node_names:
-            self._activate_lifecycle_node(node_name)
-    
-    def _deactivate_lifecycle_nodes(self, node_names):
-        """
-        Deactivate multiple lifecycle nodes.
-        
-        Args:
-            node_names: List of node names to deactivate
-        """
-        for node_name in node_names:
-            self._deactivate_lifecycle_node(node_name)
 
 
 def main():
