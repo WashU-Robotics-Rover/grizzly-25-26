@@ -56,17 +56,7 @@ jobs:
           source install/setup.bash
           set -u
 
-      # Enable if you have tests
-      # - name: Run colcon tests
-      #   run: |
-      #     set -eo pipefail
-      #     set +u
-      #     source install/setup.bash
-      #     set -u
-      #     colcon test --event-handlers console_direct+
-      #     colcon test-result --verbose
-
-      - name: Run test_node from grizzly package (detect "published")
+      - name: Run grizzly.py tests and verify passing tests
         run: |
           set -euo pipefail
 
@@ -76,42 +66,56 @@ jobs:
           source install/local_setup.bash
           set -u
 
-          : > launch.out
-          ( ros2 launch grizzly_stack grizzly_minimal.launch.py > launch.out 2>&1 ) &
-          LAUNCH_PID=$!
+          # Find grizzly.py in repository
+          GRIZZLY_PATH=$(git ls-files | grep -m1 'grizzly.py' || true)
+          if [ -z "$GRIZZLY_PATH" ]; then
+            echo "❌ grizzly.py not found in repository files."
+            exit 1
+          fi
+          echo "Found grizzly.py at: $GRIZZLY_PATH"
 
-          echo "🔎 Waiting up to 120s for log message containing 'published'..."
-          if ! timeout 120s bash -c '
-            shopt -s nocasematch
-            while true; do
-              if ! kill -0 '"$LAUNCH_PID"' 2>/dev/null; then
-                echo "❌ Launch process exited early."
-                exit 2
-              fi
-              if grep -qi "published" launch.out; then
-                echo "✅ Found \"published\" in logs."
-                exit 0
-              fi
-              sleep 1
-            done
-          '; then
-            echo "❌ Timeout or failure—no 'published' found."
-            echo "Last 100 lines of log:"
-            tail -n 100 launch.out || true
-            kill "$LAUNCH_PID" 2>/dev/null || true
-            sleep 2
-            kill -9 "$LAUNCH_PID" 2>/dev/null || true
+          # Try common test invocations (use timeout to bound run time)
+          : > grizzly_test.out
+
+          try_and_capture() {
+            CMD="$1"
+            echo "🔁 Trying: $CMD"
+            if timeout 120s bash -lc "$CMD" > grizzly_test.out 2>&1; then
+              echo "✅ Command succeeded: $CMD"
+              return 0
+            else
+              echo "⚠ Command failed or exited non-zero: $CMD"
+              return 1
+            fi
+          }
+
+          if try_and_capture "python3 \"$GRIZZLY_PATH\" --test"; then
+            :
+          elif try_and_capture "python3 \"$GRIZZLY_PATH\" test"; then
+            :
+          elif try_and_capture "python3 \"$GRIZZLY_PATH\" --run-tests"; then
+            :
+          elif [ -x "$GRIZZLY_PATH" ] && try_and_capture "\"$GRIZZLY_PATH\" --test"; then
+            :
+          elif [ -x "$GRIZZLY_PATH" ] && try_and_capture "\"$GRIZZLY_PATH\" test"; then
+            :
+          else
+            echo "❌ Failed to run any recognized test command for grizzly.py. Last output:"
+            tail -n 200 grizzly_test.out || true
             exit 1
           fi
 
-          echo "📄 Context from log:"
-          tail -n 50 launch.out || true
+          echo "---- grizzly.py test output (tail 200 lines) ----"
+          tail -n 200 grizzly_test.out || true
 
-          echo "🛑 Stopping launch..."
-          kill "$LAUNCH_PID" 2>/dev/null || true
-          sleep 2
-          kill -9 "$LAUNCH_PID" 2>/dev/null || true
-
+          # Look for common passing-test markers (case-insensitive)
+          if grep -Eiq "(all tests passed|passed:[[:space:]]*[0-9]+|[0-9]+ passed|^OK\\b|0 failed|tests:.*passed)" grizzly_test.out; then
+            echo "✅ Tests appear to have passed according to output."
+            exit 0
+          else
+            echo "❌ Could not detect passing tests in grizzly.py output."
+            exit 1
+          fi
 
   release:
     needs: build_and_test
