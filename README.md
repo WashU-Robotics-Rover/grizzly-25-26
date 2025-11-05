@@ -1,21 +1,43 @@
-# Grizzly Rover 2025-26
+<div align="center">
 
-A ROS 2 robotics software stack for the WashU Robotics Rover Team's Grizzly rover platform. This repository provides a unified software architecture with automated release management and cross-platform build support for macOS, Linux, and Windows.
+# 🐻 Grizzly Rover 2025-26
 
-## Overview
+**ROS 2 Autonomous Rover Software Stack**
 
-The Grizzly stack is designed as a modular, lifecycle-managed system for autonomous rover operations. It provides a single unified command-line interface (`grizzly.py`) for all operations including installation, building, running, and testing.
+[![ROS 2 Humble](https://img.shields.io/badge/ROS_2-Humble-blue.svg)](https://docs.ros.org/en/humble/)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-green.svg)]()
 
-### Key Features
+**[📚 Documentation](https://washu-robotics-rover.github.io/grizzly-25-26/)** • 
+**[🚀 Quick Start](#-quick-start)** • 
+**[🏗️ Architecture](#-architecture)** • 
+**[🤝 Contributing](docs/DEVELOPMENT.md)**
 
-- **Unified CLI**: Single `grizzly.py` command for all operations (install, build, run, test)
-- **Cross-Platform Support**: macOS (robostack/conda), Linux (native ROS 2), and Windows
-- **Lifecycle Management**: ROS 2 Lifecycle nodes for deterministic state management
-- **Custom Interfaces**: Dedicated message definitions in `grizzly_interfaces`
-- **Modular Architecture**: Single-package design with core system management
-- **Automated Installer**: Downloads latest releases from GitHub automatically
+---
 
-## Quick Start
+</div>
+
+## 📖 Overview
+
+A modular, lifecycle-managed ROS 2 software stack for the **WashU Robotics Rover Team**'s autonomous rover platform. Built with cross-platform support and designed for scalable, production-ready robotics development.
+
+### ✨ Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🎯 **Unified CLI** | Single `grizzly.py` command for install, build, run, and test |
+| 🌐 **Cross-Platform** | Native support for macOS (robostack), Linux, and Windows |
+| 🔄 **Lifecycle Management** | ROS 2 Lifecycle nodes with deterministic state transitions |
+| 📦 **Modular Design** | Layer-based architecture for organized node management |
+| 🧪 **Testing Suite** | Automated tests with coverage reporting (21+ tests) |
+| ⚙️ **Custom Interfaces** | Purpose-built ROS 2 message definitions |
+
+> **📘 Full Documentation**: For comprehensive guides, architecture details, and API references, visit our **[documentation website](https://washu-robotics-rover.github.io/grizzly-25-26/)**.
+
+---
+
+## 🚀 Quick Start
 
 ### Installation
 
@@ -24,65 +46,27 @@ The Grizzly stack is designed as a modular, lifecycle-managed system for autonom
 git clone https://github.com/WashU-Robotics-Rover/grizzly-25-26.git
 cd grizzly-25-26
 
-# Option 1: Install latest release from GitHub (recommended)
+# Install latest release (recommended)
 ./grizzly.py install
 
-# Option 2: Build from source
+# Or build from source
 ./grizzly.py build
 ```
 
-### Basic Usage
+### Basic Commands
 
 ```bash
-# Launch the system
-./grizzly.py run
-
-# Run tests
-./grizzly.py test
-
-# Get help
-./grizzly.py --help
+./grizzly.py run        # Launch the rover system
+./grizzly.py test       # Run test suite
+./grizzly.py --help     # Show all commands
 ```
 
-## Command Reference
-
-### Install Command
-```bash
-./grizzly.py install              # Download latest release and build
-./grizzly.py install --force      # Force re-download even if up to date
-```
-
-### Build Command
-```bash
-./grizzly.py build                # Standard build
-./grizzly.py build --clean        # Clean build (removes build/ install/ log/)
-./grizzly.py build --release      # Build in Release mode
-./grizzly.py build --symlink-install  # Use symlinks for faster iteration
-./grizzly.py build --packages-select grizzly_stack  # Build specific packages
-```
-
-### Run Command
-```bash
-./grizzly.py run                  # Launch the Grizzly minimal system
-./grizzly.py run --debug          # Launch with debug output
-```
-
-### Test Command
-```bash
-./grizzly.py test                 # Run all tests
-./grizzly.py test -v              # Verbose test output
-./grizzly.py test --coverage      # Generate coverage report
-./grizzly.py test --html          # Generate HTML coverage report
-./grizzly.py test --list          # List all available tests
-./grizzly.py test --specific test_basic  # Run specific test file
-```
-
-## Prerequisites
+<details>
+<summary><b>📋 Prerequisites</b></summary>
 
 ### macOS
-- Anaconda/Miniconda with `ros_env` environment
-- ROS 2 Humble (via robostack)
-- Python 3.11
+- Anaconda/Miniconda with ROS 2 Humble (via robostack)
+- Python 3.11+
 
 ```bash
 conda create -n ros_env python=3.11
@@ -90,102 +74,118 @@ conda activate ros_env
 conda install -c robostack ros-humble-desktop colcon-common-extensions
 ```
 
-### Linux
-- Ubuntu 22.04 (Jammy)
+### Linux (Ubuntu 22.04)
 - ROS 2 Humble (native install)
 - Python 3.10+
 
 ```bash
 # Follow: https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html
-sudo apt update
-sudo apt install ros-humble-desktop python3-colcon-common-extensions
+sudo apt update && sudo apt install ros-humble-desktop python3-colcon-common-extensions
 ```
 
-### Windows
-- ROS 2 Humble (native install)
-- Python 3.10+
+</details>
 
-## Architecture
+<details>
+<summary><b>🛠️ CLI Command Reference</b></summary>
+
+### Build Commands
+```bash
+./grizzly.py build                              # Standard build
+./grizzly.py build --clean                      # Clean build
+./grizzly.py build --release                    # Release mode
+./grizzly.py build --symlink-install            # Symlink for fast iteration
+./grizzly.py build --packages-select <pkg>      # Build specific package
+```
+
+### Test Commands
+```bash
+./grizzly.py test                    # Run all tests
+./grizzly.py test -v                 # Verbose output
+./grizzly.py test --coverage         # Generate coverage
+./grizzly.py test --html             # HTML coverage report
+./grizzly.py test --list             # List available tests
+./grizzly.py test --specific <name>  # Run specific test
+```
+
+### Run Commands
+```bash
+./grizzly.py run         # Launch system
+./grizzly.py run --debug # Debug mode with verbose output
+```
+
+</details>
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    A[System Manager<br/>Operational State Machine] --> B[Layer Manager<br/>Lifecycle Orchestration]
+    B --> C[Perception Layer]
+    B --> D[Planning Layer]
+    B --> E[Control Layer]
+    C --> F[Sensor Processing]
+    D --> G[Path Planning]
+    E --> H[Motor Control]
+    
+    style A fill:#4CAF50,stroke:#333,stroke-width:2px
+    style B fill:#2196F3,stroke:#333,stroke-width:2px
+    style C fill:#FF9800,stroke:#333,stroke-width:2px
+    style D fill:#FF9800,stroke:#333,stroke-width:2px
+    style E fill:#FF9800,stroke:#333,stroke-width:2px
+```
+
+### Core Components
+
+| Component | Description | Documentation |
+|-----------|-------------|---------------|
+| **System Manager** | Manages rover operational states (STARTUP → AUTONOMOUS → ...) | [State Machine Guide](docs/STATE_MACHINE_GUIDE.md) |
+| **Layer Manager** | Orchestrates lifecycle of grouped nodes (perception, planning, control) | [State Management Guide](docs/STATE_MANAGEMENT_GUIDE.md) |
+| **Custom Interfaces** | ROS 2 messages: `OperationalState`, `PerceptionState`, `NodeStatus` | [ROS Reference](docs/ROS_REFERENCE.md) |
 
 ### Repository Structure
 
 ```
 grizzly-25-26/
-├── grizzly.py                   # ⭐ Unified CLI - single entry point
-├── docs/                        # Documentation
-│   ├── DEVELOPMENT.md          # Development guide
-│   ├── STATE_MACHINE_GUIDE.md  # State machine reference
-│   ├── TESTING.md              # Testing guide
-│   └── TEST_DETAILS.md         # Detailed test information
-├── grizzly_interfaces/          # Custom ROS 2 message definitions
-│   ├── msg/
-│   │   ├── NodeStatus.msg
-│   │   ├── OperationalState.msg
-│   │   └── PerceptionState.msg
-│   └── srv/
-│       └── ChangeState.srv
-└── grizzly_stack/              # Main software stack
-    ├── config/
-    │   ├── core.yaml           # System configuration
-    │   └── layers.yaml         # Layer configuration (node organization)
-    ├── launch/
-    │   └── grizzly_minimal.launch.py
-    ├── src/grizzly_stack/
-    │   └── core/
-    │       ├── system_manager.py  # Operational state management
-    │       ├── layer_manager.py   # Layer-based lifecycle management
-    │       └── lifecycle_manager.py  # Startup orchestration
-    └── test/                   # Test suite
-        ├── test_basic.py
-        └── test_system_manager.py
+├── grizzly.py                      # 🎯 Unified CLI entry point
+├── grizzly_interfaces/             # Custom ROS 2 message definitions
+│   ├── msg/                        # Message types
+│   └── srv/                        # Service types
+├── grizzly_stack/                  # Main software stack
+│   ├── config/                     # YAML configuration
+│   │   ├── core.yaml              # System parameters
+│   │   └── layers.yaml            # Node layer definitions
+│   ├── launch/                     # ROS 2 launch files
+│   ├── src/grizzly_stack/core/    # Core system nodes
+│   │   ├── system_manager.py      # State machine
+│   │   ├── layer_manager.py       # Lifecycle orchestration
+│   │   └── lifecycle_manager.py   # Startup management
+│   └── test/                       # Test suite
+└── docs/                           # Documentation (Docsify site)
 ```
 
-### System Components
+> **🔗 Learn More**: Full architecture documentation at **[Architecture Guide](https://washu-robotics-rover.github.io/grizzly-25-26/#/ARCHITECTURE)**
 
-#### System Manager
-ROS 2 Lifecycle Node that manages the rover's operational state machine and delegates lifecycle control to the Layer Manager.
+---
 
-**States**: STARTUP, STANDBY, AUTONOMOUS, MANUAL, EMERGENCY, ERROR, SHUTDOWN
+## 📚 Documentation
 
-**Topics**:
-- `/system/state` - Current operational state (1 Hz)
-- `/system/health` - Health status messages
+Our comprehensive documentation is hosted at **[washu-robotics-rover.github.io/grizzly-25-26](https://washu-robotics-rover.github.io/grizzly-25-26/)**.
 
-**Services**:
-- `/system/change_state` - Request state transitions
+### Quick Links
 
-#### Layer Manager
-Manages lifecycle transitions for nodes organized into logical layers. Nodes are grouped into layers (e.g., perception, planning, control) and activated/deactivated together based on operational state. This architecture prevents the system manager from becoming bloated as more nodes are added.
+| Topic | Link |
+|-------|------|
+| 🏗️ **System Architecture** | [ARCHITECTURE.md](https://washu-robotics-rover.github.io/grizzly-25-26/#/ARCHITECTURE) |
+| 🔄 **State Machine Reference** | [STATE_MACHINE_GUIDE.md](https://washu-robotics-rover.github.io/grizzly-25-26/#/STATE_MACHINE_GUIDE) |
+| 🎛️ **State Management** | [STATE_MANAGEMENT_GUIDE.md](https://washu-robotics-rover.github.io/grizzly-25-26/#/STATE_MANAGEMENT_GUIDE) |
+| 🧪 **Testing Guide** | [TESTING.md](https://washu-robotics-rover.github.io/grizzly-25-26/#/TESTING) |
+| 👨‍💻 **Development Guide** | [DEVELOPMENT.md](https://washu-robotics-rover.github.io/grizzly-25-26/#/DEVELOPMENT) |
+| 📡 **ROS 2 API Reference** | [ROS_REFERENCE.md](https://washu-robotics-rover.github.io/grizzly-25-26/#/ROS_REFERENCE) |
 
-**Key Features**:
-- Layer-based node organization (configured in `layers.yaml`)
-- Automatic activation/deactivation based on operational state
-- State-layer mapping (e.g., AUTONOMOUS activates perception, planning, control layers)
-- Async lifecycle transitions to avoid blocking
-
-**Layer Configuration**: See `grizzly_stack/config/layers.yaml`
-
-For detailed layer management documentation, see [docs/STATE_MANAGEMENT_GUIDE.md](docs/STATE_MANAGEMENT_GUIDE.md#layer-management).
-
-#### Custom Messages
-
-**OperationalState**: System operational state with timestamp and description
-
-**PerceptionState**: Integrated state estimation
-- Pose with covariance (position & orientation)
-- Twist with covariance (linear & angular velocity)
-- Terrain classification (unknown/flat/sand/rocky)
-
-**NodeStatus**: Individual node health reporting
-
-For detailed state machine documentation, see [docs/STATE_MACHINE_GUIDE.md](docs/STATE_MACHINE_GUIDE.md).
-
-## Usage Examples
-
-### Launch the System
-```bash
-./grizzly.py run
-```
+<details>
+<summary><b>💡 Usage Examples</b></summary>
 
 ### Monitor System State
 ```bash
@@ -194,7 +194,7 @@ ros2 topic echo /system/state
 
 ### Change Operational State
 ```bash
-# Change to AUTONOMOUS mode
+# Switch to autonomous mode
 ros2 service call /system/change_state grizzly_interfaces/srv/ChangeState \
   "{requested_state: 2, reason: 'Starting autonomous mission'}"
 
@@ -205,151 +205,59 @@ ros2 service call /system/change_state grizzly_interfaces/srv/ChangeState \
 
 ### Lifecycle Management
 ```bash
-# Get current lifecycle state
 ros2 lifecycle get /system_manager
-
-# Manually control lifecycle
 ros2 lifecycle set /system_manager configure
 ros2 lifecycle set /system_manager activate
 ```
 
-## Configuration
+> **📖 More Examples**: See [ROS Reference](https://washu-robotics-rover.github.io/grizzly-25-26/#/ROS_REFERENCE) for complete API usage.
 
-Configuration files are located in `grizzly_stack/config/`:
-
-### System Configuration (`core.yaml`)
-
-```yaml
-system_manager:
-  ros__parameters:
-    health_rate_hz: 1.0  # Health status publish rate (Hz)
-```
-
-### Layer Configuration (`layers.yaml`)
-
-Defines how nodes are organized into layers for lifecycle management:
-
-```yaml
-layers:
-  perception:
-    nodes:
-      - perception_node
-    startup_order: 1
-    description: "Perception and sensor processing layer"
-  
-  planning:
-    nodes:
-      - planner_node
-    startup_order: 2
-    description: "Path and behavior planning layer"
-  
-  control:
-    nodes:
-      - control_node
-    startup_order: 3
-    description: "Motor and actuator control layer"
-```
-
-**Adding Nodes to Layers**: Simply add node names to the `nodes` list in the appropriate layer. The layer manager will automatically manage them during operational state transitions.
-
-**Layer-State Mapping**: The layer manager automatically activates/deactivates layers based on operational state:
-- **AUTONOMOUS/MANUAL**: Activates perception, planning, control layers
-- **STANDBY/STARTUP**: No operational layers active
-- **EMERGENCY/ERROR/SHUTDOWN**: Deactivates all operational layers immediately
-
-Modify configuration files and relaunch (no rebuild required).
-
-## Documentation
-
-The documentation is available in multiple formats:
-
-- **Interactive Docs (Docsify)**: View the documentation with a modern, searchable interface
-  - **Local**: Serve locally with `docsify serve docs` (requires `npm install -g docsify-cli`)
-  - **GitHub Pages**: Available at [https://washu-robotics-rover.github.io/grizzly-25-26/](https://washu-robotics-rover.github.io/grizzly-25-26/) (when configured)
-
-- **Markdown Files**: Direct access to documentation files
-  - **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development workflow, coding guidelines, and contribution process
-  - **[STATE_MACHINE_GUIDE.md](docs/STATE_MACHINE_GUIDE.md)** - Operational state machine reference and usage
-  - **[STATE_MANAGEMENT_GUIDE.md](docs/STATE_MANAGEMENT_GUIDE.md)** - Comprehensive state management guide
-  - **[LIFECYCLE_MANAGER.md](docs/LIFECYCLE_MANAGER.md)** - Lifecycle manager documentation
-  - **[PERCEPTION_SYSTEM.md](docs/PERCEPTION_SYSTEM.md)** - Perception system documentation
-  - **[TESTING.md](docs/TESTING.md)** - Testing guide and test suite documentation
-  - **[TEST_DETAILS.md](docs/TEST_DETAILS.md)** - Detailed test implementation information
-
-## Troubleshooting
-
-### Build Issues
-```bash
-# Clean build
-./grizzly.py build --clean
-
-# Check environment (macOS)
-conda activate ros_env
-which python
-
-# Check environment (Linux)
-source /opt/ros/humble/setup.bash
-ros2 --version
-```
-
-### Runtime Issues
-```bash
-# Verify workspace is sourced
-source install/setup.bash  # Linux
-source install/setup.zsh   # macOS
-
-# Check if node is running
-ros2 node list
-
-# Enable debug output
-./grizzly.py run --debug
-```
-
-For detailed troubleshooting, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
-
-## Current Implementation Status
-
-✅ **Implemented:**
-- Cross-platform CLI tool (`grizzly.py`)
-- System manager with lifecycle management
-- Layer-based node management system
-- Operational state machine (7 states)
-- Custom ROS 2 interfaces
-- Automated testing (21 tests)
-- Configuration management
-
-🚧 **Planned:**
-- Perception subsystem
-- Planning subsystem
-- Control subsystem
-- Telemetry system
-
-## Contributing
-
-This is an internal project for the WashU Robotics Rover Team.
-
-### Contribution Workflow
-
-1. Create a feature branch: `git checkout -b feature/your-feature-name`
-2. Make your changes and test: `./grizzly.py test`
-3. Commit and push: `git push origin feature/your-feature-name`
-4. Create a Pull Request on GitHub
-
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for detailed guidelines.
-
-## Project Information
-
-- **Team**: WashU Robotics Rover Team
-- **Repository**: https://github.com/WashU-Robotics-Rover/grizzly-25-26
-- **Academic Year**: 2025-26
-- **ROS 2 Distribution**: Humble
-- **License**: MIT
-
-## Contact
-
-- **Email**: huindam@gmail.com
-- **GitHub**: https://github.com/WashU-Robotics-Rover
+</details>
 
 ---
 
+## 🚧 Development Status
+
+| Component | Status |
+|-----------|--------|
+| ✅ CLI Tool & Build System | **Implemented** |
+| ✅ System Manager & State Machine | **Implemented** |
+| ✅ Layer-Based Lifecycle Management | **Implemented** |
+| ✅ Custom ROS 2 Interfaces | **Implemented** |
+| ✅ Testing Infrastructure (21+ tests) | **Implemented** |
+| 🚧 Perception Subsystem | **Planned** |
+| 🚧 Planning Subsystem | **Planned** |
+| 🚧 Control Subsystem | **Planned** |
+
+---
+
+## 🤝 Contributing
+
+This is an internal project for the **WashU Robotics Rover Team**.
+
+### Workflow
+
+1. **Branch**: `git checkout -b feature/your-feature`
+2. **Test**: `./grizzly.py test`
+3. **Push**: `git push origin feature/your-feature`
+4. **PR**: Create a Pull Request on GitHub
+
+> **👨‍💻 Developer Guide**: See [DEVELOPMENT.md](https://washu-robotics-rover.github.io/grizzly-25-26/#/DEVELOPMENT) for coding standards and guidelines.
+
+---
+
+## 📞 Contact
+
+- **Team**: WashU Robotics Rover Team  
+- **Email**: huindam@gmail.com  
+- **GitHub**: [@WashU-Robotics-Rover](https://github.com/WashU-Robotics-Rover)
+
+---
+
+<div align="center">
+
 **Go Bears! 🐻**
+
+*Built with ❤️ by the WashU Robotics Rover Team*
+
+</div>
