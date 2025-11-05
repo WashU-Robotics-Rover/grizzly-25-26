@@ -56,6 +56,10 @@ jobs:
           source install/setup.bash
           set -u
 
+      - name: Allow GitHub Actions workspace as safe directory
+        run: |
+           git config --global --add safe.directory /__w/grizzly-25-26/grizzly-25-26
+
       - name: Run grizzly.py tests and verify passing tests
         run: |
           set -euo pipefail
