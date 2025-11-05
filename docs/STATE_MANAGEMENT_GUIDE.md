@@ -246,30 +246,33 @@ state: 2  # AUTONOMOUS
 
 ### How They Work Together
 
-The System Manager uses operational states to control lifecycle states of managed nodes:
+The System Manager uses operational states to control lifecycle states of managed nodes through the **Layer Manager**. Instead of managing individual nodes, the system uses **layer-based organization**:
 
 ```python
-def _handle_state_transition(self, old_state, new_state):
-    """Manage subsystem lifecycle based on operational state."""
+def _on_state_transition(self, old_state, new_state):
+    """Delegate layer management based on operational state."""
     
-    if new_state == OperationalState.AUTONOMOUS:
-        # Activate perception for autonomous navigation
-        self._activate_lifecycle_nodes(['perception_node'])
-    
-    elif new_state == OperationalState.STANDBY:
-        # Deactivate operational nodes to save resources
-        self._deactivate_lifecycle_nodes(['perception_node'])
+    # Delegate to Layer Manager, which handles nodes organized by layers
+    self._layer_manager.handle_state_transition(old_state, new_state)
 ```
 
-### State Mapping Example
+The Layer Manager automatically:
+- Activates required layers based on operational state
+- Deactivates layers no longer needed
+- Manages all nodes within each layer together
+- Handles emergency/shutdown states immediately
 
-| Operational State | System Manager | Perception Node | Navigation Node |
-|------------------|----------------|-----------------|-----------------|
-| STARTUP | Active | Inactive | Inactive |
-| STANDBY | Active | Inactive | Inactive |
-| AUTONOMOUS | Active | **Active** | **Active** |
-| MANUAL | Active | Inactive | Inactive |
-| EMERGENCY | Active | **Active** | Inactive |
+### State Mapping Example (Layer-Based)
+
+| Operational State | System Manager | Active Layers | Node States |
+|------------------|----------------|---------------|-------------|
+| STARTUP | Active | None | All nodes inactive |
+| STANDBY | Active | None | All nodes inactive |
+| AUTONOMOUS | Active | **perception, planning, control** | All nodes in these layers active |
+| MANUAL | Active | **perception, planning, control** | All nodes in these layers active |
+| EMERGENCY | Active | None | All operational layers deactivated immediately |
+| ERROR | Active | None | All operational layers deactivated |
+| SHUTDOWN | Active | None | All layers deactivated |
 
 ### Typical State Flow
 
@@ -300,18 +303,224 @@ System Boot
         │  (User requests autonomous mode)
         ↓
 ┌────────────────┐
-│ Operational    │  System Manager activates subsystems:
-│ State:         │  - perception_node: inactive → active
-│ AUTONOMOUS     │  - navigation: inactive → active
+│ Operational    │  Layer Manager activates layers:
+│ State:         │  - perception layer (all nodes)
+│ AUTONOMOUS     │  - planning layer (all nodes)
+│                │  - control layer (all nodes)
 └───────┬────────┘
         │
         │  (Mission complete)
         ↓
 ┌────────────────┐
-│ Operational    │  System Manager deactivates subsystems:
-│ State:         │  - perception_node: active → inactive
-│ STANDBY        │  - navigation: active → inactive
+│ Operational    │  Layer Manager deactivates layers:
+│ State:         │  - perception layer: active → inactive
+│ STANDBY        │  - planning layer: active → inactive
+│                │  - control layer: active → inactive
 └────────────────┘
+```
+
+## Layer Management
+
+### Overview
+
+The **Layer Manager** provides a scalable architecture for managing nodes organized into logical layers. Instead of managing individual nodes, the system groups related nodes together and activates/deactivates entire layers based on operational state.
+
+**Benefits**:
+- **Scalability**: Adding new nodes to existing layers doesn't require modifying system manager code
+- **Organization**: Related nodes are grouped logically (perception, planning, control, etc.)
+- **Simplicity**: System manager delegates lifecycle control to layer manager
+- **Maintainability**: Layer configuration is centralized in YAML
+
+### Layer Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    System Manager                           │
+│                                                              │
+│  Operational State Changes                                  │
+│         │                                                    │
+│         ↓                                                    │
+│  ┌──────────────────────────────────────┐                   │
+│  │         Layer Manager                │                   │
+│  │                                       │                   │
+│  │  ┌──────────────────────────────┐    │                   │
+│  │  │  State-Layer Mapping         │    │                   │
+│  │  │  AUTONOMOUS → [perception,   │    │                   │
+│  │  │               planning,      │    │                   │
+│  │  │               control]      │    │                   │
+│  │  └──────────────────────────────┘    │                   │
+│  │         │                            │                   │
+│  │         ↓                            │                   │
+│  │  ┌──────────────────────────────┐    │                   │
+│  │  │  Layer Configuration         │    │                   │
+│  │  │  perception: [perception_node]│   │                   │
+│  │  │  planning: [planner_node]    │    │                   │
+│  │  │  control: [control_node]    │    │                   │
+│  │  └──────────────────────────────┘    │                   │
+│  │         │                            │                   │
+│  │         ↓                            │                   │
+│  │  Lifecycle Transitions (per node)   │                   │
+│  └──────────────────────────────────────┘                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Layer Configuration
+
+Layers are configured in `grizzly_stack/config/layers.yaml`:
+
+```yaml
+layers:
+  perception:
+    nodes:
+      - perception_node
+      - sensor_fusion_node  # Multiple nodes per layer
+    startup_order: 1
+    description: "Perception and sensor processing layer"
+  
+  planning:
+    nodes:
+      - planner_node
+      - path_finder_node
+    startup_order: 2
+    description: "Path and behavior planning layer"
+  
+  control:
+    nodes:
+      - control_node
+    startup_order: 3
+    description: "Motor and actuator control layer"
+```
+
+**Configuration Fields**:
+- `nodes`: List of node names in this layer (can be multiple)
+- `startup_order`: Order in which layers are configured during startup (lower = earlier)
+- `description`: Human-readable description of the layer's purpose
+
+### State-Layer Mapping
+
+The Layer Manager maps operational states to required layers:
+
+| Operational State | Active Layers | Purpose |
+|------------------|----------------|---------|
+| **STARTUP** | None | System initializing, no operational layers |
+| **STANDBY** | None | Ready but idle, save resources |
+| **AUTONOMOUS** | perception, planning, control | Full autonomous operation |
+| **MANUAL** | perception, planning, control | Manual control with full sensing |
+| **EMERGENCY** | None | Immediate deactivation of all operational layers |
+| **ERROR** | None | Error state, deactivate operational layers |
+| **SHUTDOWN** | None | System shutting down |
+
+**Custom Mapping**: The state-layer mapping is defined in `LayerManager._state_layer_mapping`. To change which layers are active in each state, modify this mapping.
+
+### Adding Nodes to Layers
+
+To add a new node to an existing layer, simply add it to the `nodes` list in `layers.yaml`:
+
+```yaml
+layers:
+  perception:
+    nodes:
+      - perception_node
+      - new_sensor_node  # ← Add here
+    startup_order: 1
+```
+
+**No code changes needed!** The layer manager automatically:
+- Detects the new node during startup (via lifecycle manager)
+- Manages its lifecycle transitions along with other nodes in the layer
+- Activates/deactivates it based on operational state
+
+### Creating New Layers
+
+To create a new layer:
+
+1. **Add to `layers.yaml`**:
+```yaml
+layers:
+  navigation:
+    nodes:
+      - navigation_node
+      - localization_node
+    startup_order: 2  # Between perception (1) and control (3)
+    description: "Navigation and localization layer"
+```
+
+2. **Update state-layer mapping** in `LayerManager._state_layer_mapping`:
+```python
+self._state_layer_mapping = {
+    OperationalState.AUTONOMOUS: ['perception', 'planning', 'navigation', 'control'],
+    # ... other states
+}
+```
+
+3. **Rebuild and test**:
+```bash
+./grizzly.py build
+./grizzly.py test
+./grizzly.py run
+```
+
+### Layer Lifecycle Flow
+
+```
+Operational State: STANDBY → AUTONOMOUS
+        │
+        ↓
+Layer Manager: Determine required layers
+        │
+        ├─→ perception layer (not active) → activate
+        ├─→ planning layer (not active) → activate
+        └─→ control layer (not active) → activate
+        │
+        ↓
+For each layer:
+        │
+        ├─→ For each node in layer:
+        │       ├─→ Check current state (cached)
+        │       ├─→ If inactive → activate
+        │       └─→ If unconfigured → configure then activate
+        │
+        ↓
+All nodes in required layers active
+```
+
+### Emergency Handling
+
+The Layer Manager has special handling for emergency and shutdown states:
+
+```python
+if new_state == OperationalState.EMERGENCY:
+    # Deactivate ALL layers immediately, bypassing normal logic
+    self._deactivate_all_layers()
+    return  # Skip normal layer management
+```
+
+This ensures immediate response to emergency conditions without waiting for normal layer transitions.
+
+### Best Practices for Layers
+
+1. **Logical Grouping**: Group nodes that work together or have similar purposes
+2. **Startup Order**: Order layers by dependencies (e.g., perception before planning)
+3. **State Mapping**: Consider which layers are needed for each operational state
+4. **Layer Size**: Keep layers focused - don't put too many unrelated nodes in one layer
+5. **Documentation**: Add clear descriptions to help other developers understand layer purposes
+
+### Example: Adding a Teleoperation Layer
+
+```yaml
+# layers.yaml
+layers:
+  teleoperation:
+    nodes:
+      - teleop_node
+      - joystick_node
+    startup_order: 4
+    description: "Teleoperation and manual control layer"
+```
+
+```python
+# In LayerManager._state_layer_mapping
+OperationalState.MANUAL: ['perception', 'teleoperation'],  # Manual mode needs teleop
 ```
 
 ## Best Practices

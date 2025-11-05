@@ -19,7 +19,7 @@ setup(
     
     # Specify all Python packages to include
     # Main package + core subpackage (more subpackages like perception, planning, etc. to be added)
-    packages=[package_name, package_name + '.core', package_name + '.perception'],
+    packages=[package_name, package_name + '.core', package_name + '.perception', package_name + '.planner', package_name + '.control'],
     
     # Map package names to their directory locations
     # 'src' means the src directory is the root of grizzly_stack package
@@ -42,7 +42,13 @@ setup(
         
         # Install configuration files to share/<package_name>/config
         # YAML config files contain parameter values for nodes
-        ('share/' + package_name + '/config', ['config/core.yaml', 'config/perception.yaml']),
+        ('share/' + package_name + '/config', [
+            'config/core.yaml',
+            'config/perception.yaml',
+            'config/planner.yaml',
+            'config/control.yaml',
+            'config/layers.yaml',
+        ]),
     ],
     
     # Python dependencies required by this package
@@ -73,6 +79,14 @@ setup(
             'perception_node = grizzly_stack.perception.perception_node:main',
             # Central sensor processing and state estimation
             'central_perception = grizzly_stack.perception.central_perception:main',
+            
+            # --- PLANNER SUBSYSTEM ---
+            # Test planner node (lifecycle-managed template)
+            'planner_node = grizzly_stack.planner.planner_node:main',
+            
+            # --- CONTROL SUBSYSTEM ---
+            # Test control node (lifecycle-managed template)
+            'control_node = grizzly_stack.control.control_node:main',
             
             # --- PLANNING SUBSYSTEM ---
             # High-level path and behavior planning for different subsystems

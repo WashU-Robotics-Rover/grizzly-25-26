@@ -55,36 +55,66 @@ The Lifecycle Manager solves these issues by:
 
 ## Startup Sequence
 
-The Lifecycle Manager executes a carefully ordered sequence of transitions:
+The Lifecycle Manager executes a carefully ordered sequence of transitions based on layer configuration:
 
-### Default Sequence
+### Layer-Based Startup
+
+The lifecycle manager uses **layer-based organization** to detect and configure nodes:
 
 1. **System Manager**: `unconfigured` → `inactive` (configure)
 2. **System Manager**: `inactive` → `active` (activate)
-3. **Perception Node** (if detected): `unconfigured` → `inactive` (configure)
+3. **Layer Nodes** (in startup order): Configure all nodes in each layer to `inactive`
 
-> **Note**: The perception node is configured but NOT activated by the lifecycle manager. The System Manager will activate it based on operational state transitions.
+> **Note**: Nodes are configured but NOT activated by the lifecycle manager. The System Manager (via Layer Manager) will activate them based on operational state transitions.
 
-### Dynamic Detection
+### Layer Detection
 
-The manager dynamically detects which nodes are available:
+The manager dynamically detects which layers are available by checking all nodes in each layer:
 
 ```python
 def build_startup_sequence(self):
-    """Dynamically build startup sequence based on available nodes."""
+    """Dynamically build startup sequence based on available layers."""
     sequence = [
         ('system_manager', 'inactive', 'Configure System Manager'),
         ('system_manager', 'active', 'Activate System Manager'),
     ]
     
-    # Check if perception node is available
-    if perception_service_available():
-        sequence.append(
-            ('perception_node', 'inactive', 'Configure Perception Node')
-        )
+    # Check each layer in startup_order (from layers.yaml)
+    for layer_name in self._layer_order:
+        all_available, available_nodes = self.check_layer_available(layer_name)
+        
+        if available_nodes:
+            # Configure all nodes in this layer
+            for node_name in available_nodes:
+                sequence.append(
+                    (node_name, 'inactive', f'Configure {layer_name} layer: {node_name}')
+                )
     
     return sequence
 ```
+
+**Layer Configuration**: Layers are defined in `grizzly_stack/config/layers.yaml` with:
+- `nodes`: List of node names in the layer
+- `startup_order`: Order in which layers are configured during startup
+- `description`: Human-readable description of the layer's purpose
+
+**Example Layer Config**:
+```yaml
+layers:
+  perception:
+    nodes:
+      - perception_node
+    startup_order: 1
+    description: "Perception and sensor processing layer"
+  
+  planning:
+    nodes:
+      - planner_node
+    startup_order: 2
+    description: "Path and behavior planning layer"
+```
+
+This approach scales automatically: when new nodes are added to existing layers, they're automatically detected and configured without modifying the lifecycle manager code.
 
 ## Key Methods
 
@@ -270,24 +300,40 @@ If a node accepts the transition but never reaches the target state:
 | **Debugging** | Hard to diagnose timing issues | Clear state transition logs |
 | **Portability** | Different timing on different machines | Works consistently across platforms |
 
-## Integration with System Manager
+## Integration with System Manager and Layer Manager
 
 The Lifecycle Manager handles **initial startup** only. Once nodes are configured:
 
 1. **Lifecycle Manager** configures and activates `system_manager`
-2. **Lifecycle Manager** configures (but doesn't activate) `perception_node`
+2. **Lifecycle Manager** configures all nodes in layers (but doesn't activate them)
 3. **System Manager** takes over operational state management
-4. **System Manager** activates/deactivates nodes based on operational states
+4. **System Manager** delegates to **Layer Manager** for lifecycle control
+5. **Layer Manager** activates/deactivates entire layers based on operational states
 
 ```
 Startup Phase                    Operational Phase
 ──────────────                   ─────────────────
 Lifecycle Manager  ───────────→  System Manager
     │                                   │
-    ├─ Configure nodes                  ├─ Activate on AUTONOMOUS
-    ├─ Activate core nodes              ├─ Deactivate on STANDBY
-    └─ Exit when complete               └─ Manage during operation
+    ├─ Configure nodes by layer        │
+    ├─ Activate system_manager          │
+    └─ Exit when complete               │
+                                        │
+                                        ↓
+                                   Layer Manager
+                                        │
+                                        ├─ Activate layers on AUTONOMOUS
+                                        ├─ Deactivate layers on STANDBY
+                                        └─ Manage nodes by layer
 ```
+
+**Layer-Based Management**: Instead of managing individual nodes, the System Manager delegates to the Layer Manager, which:
+- Groups nodes into logical layers (perception, planning, control, etc.)
+- Activates/deactivates entire layers together
+- Maps operational states to required layers
+- Prevents the system manager from becoming bloated as more nodes are added
+
+For details on layer management, see [State Management Guide](STATE_MANAGEMENT_GUIDE.md#layer-management).
 
 ## Testing
 

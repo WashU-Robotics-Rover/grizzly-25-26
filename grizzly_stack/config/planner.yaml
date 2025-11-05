@@ -1,0 +1,60 @@
+---
+# Planner Node Configuration for Grizzly Robotics Stack
+#
+# This configuration file controls the test planner node behavior.
+# The planner node is a lifecycle-managed node that can be enabled/disabled
+# and activated/deactivated by the System Manager based on operational states.
+#
+# When to enable planner:
+# - AUTONOMOUS mode: Planner is required for autonomous path planning
+# - MANUAL mode: Planner may be enabled for assisted navigation
+# - STANDBY mode: Planner is typically disabled to save resources
+#
+# Usage:
+#   - Set 'enabled: true' to allow the node to be activated
+#   - Set 'enabled: false' to prevent the node from activating
+#   - Adjust planning_rate_hz based on computational budget and dynamics
+#   - Adjust max_path_length based on mission requirements
+
+planner_node:
+  ros__parameters:
+    # === Core Settings ===
+    enabled: true  # Whether planner should be available for activation
+    
+    # === Planning Parameters ===
+    planning_rate_hz: 1.0  # Path planning frequency (Hz)
+    # Lower rates (0.5-1.0 Hz) for stable environments
+    # Higher rates (2.0-5.0 Hz) for dynamic environments with obstacles
+    
+    max_path_length: 50.0  # Maximum path distance in meters
+    # Typical values:
+    #   - Short missions: 20.0-30.0m
+    #   - Medium missions: 50.0-100.0m
+    #   - Long missions: 100.0-200.0m
+    
+    waypoint_spacing: 2.0  # Distance between path waypoints (meters)
+    # Typical values:
+    #   - Fine control: 0.5-1.0m (more waypoints, smoother paths)
+    #   - Normal control: 1.5-2.5m (balanced)
+    #   - Coarse control: 3.0-5.0m (fewer waypoints, faster planning)
+    
+    planning_algorithm: 'A*'  # Algorithm identifier (for logging/debugging)
+    # Common algorithms:
+    #   - 'A*': Grid-based, optimal paths
+    #   - 'RRT': Rapidly-exploring Random Trees
+    #   - 'RRT*': Optimized RRT variant
+    #   - 'PRM': Probabilistic Roadmap
+    #   - 'DWA': Dynamic Window Approach
+    
+    replan_threshold: 5.0  # Distance to goal before generating new goal (meters)
+    # Typical values:
+    #   - Small threshold (1.0-3.0m): Frequent replanning, precise goals
+    #   - Medium threshold (4.0-7.0m): Balanced approach
+    #   - Large threshold (8.0-15.0m): Fewer replans, broader navigation
+    
+    # === Advanced Settings (Future Use) ===
+    # collision_check_distance: 0.5  # Distance ahead for collision checking
+    # obstacle_clearance: 0.3  # Minimum clearance from obstacles (meters)
+    # max_planning_time: 5.0  # Maximum time allowed for planning (seconds)
+    # path_smoothing: true  # Whether to smooth the generated path
+    # dynamic_obstacles: true  # Whether to consider moving obstacles

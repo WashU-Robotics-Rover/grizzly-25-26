@@ -1,0 +1,80 @@
+---
+# Control Node Configuration for Grizzly Robotics Stack
+#
+# This configuration file controls the test control node behavior.
+# The control node is a lifecycle-managed node that can be enabled/disabled
+# and activated/deactivated by the System Manager based on operational states.
+#
+# When to enable control:
+# - AUTONOMOUS mode: Control is required for executing planned motions
+# - MANUAL mode: Control translates operator commands to motor signals
+# - STANDBY mode: Control is typically disabled to prevent unintended motion
+#
+# Usage:
+#   - Set 'enabled: true' to allow the node to be activated
+#   - Set 'enabled: false' to prevent the node from activating
+#   - Adjust control_rate_hz based on system dynamics and actuator responsiveness
+#   - Configure velocity and acceleration limits for safe operation
+
+control_node:
+  ros__parameters:
+    # === Core Settings ===
+    enabled: true  # Whether control should be available for activation
+    
+    # === Control Loop Parameters ===
+    control_rate_hz: 10.0  # Control loop frequency (Hz)
+    # Typical values:
+    #   - Low-speed systems: 5.0-10.0 Hz
+    #   - Standard mobile robots: 10.0-20.0 Hz
+    #   - High-speed/precision systems: 50.0-100.0 Hz
+    
+    # === Velocity Limits ===
+    max_linear_velocity: 2.0  # Maximum linear velocity (m/s)
+    # Typical rover values:
+    #   - Slow/careful: 0.5-1.0 m/s
+    #   - Normal operation: 1.5-2.5 m/s
+    #   - Fast terrain: 3.0-5.0 m/s
+    
+    max_angular_velocity: 1.5  # Maximum angular velocity (rad/s)
+    # Typical values:
+    #   - Slow turns: 0.5-1.0 rad/s (~30-60 deg/s)
+    #   - Normal turns: 1.0-2.0 rad/s (~60-120 deg/s)
+    #   - Fast turns: 2.0-3.0 rad/s (~120-180 deg/s)
+    
+    # === Acceleration Limits ===
+    max_acceleration: 1.0  # Maximum acceleration (m/s^2)
+    # Typical values:
+    #   - Smooth/gentle: 0.5-1.0 m/s^2
+    #   - Normal operation: 1.0-2.0 m/s^2
+    #   - Aggressive: 2.0-4.0 m/s^2
+    
+    # === Control Mode ===
+    control_mode: 'velocity'  # Control mode identifier
+    # Common modes:
+    #   - 'velocity': Direct velocity control (most common for mobile robots)
+    #   - 'position': Position-based control (precise positioning)
+    #   - 'effort': Torque/force control (compliant manipulation)
+    #   - 'trajectory': Trajectory following (coordinated motion)
+    
+    # === Safety Configuration ===
+    safety_enabled: true  # Enable safety checks and limits
+    # When enabled:
+    #   - Commands are checked against velocity/acceleration limits
+    #   - Violations trigger warnings and command clamping
+    #   - Emergency stop functionality is active
+    #   - Watchdog timers monitor control loop health
+    
+    # === Performance Monitoring ===
+    # These parameters control diagnostic and monitoring features
+    status_publish_rate: 0.1  # Publish detailed status at 0.1 Hz (every 10s)
+    command_timeout: 1.0  # Maximum time without new commands before timeout (seconds)
+    
+    # === Hardware Interface ===
+    # These would connect to actual motor controllers in a real system
+    motor_controller_type: 'mock'  # Motor controller type (mock, roboclaw, can, etc.)
+    left_motor_id: 128  # Left motor controller ID
+    right_motor_id: 129  # Right motor controller ID
+    
+    # === Coordinate Frame ===
+    base_frame_id: 'base_link'  # TF frame for the robot base
+    odom_frame_id: 'odom'  # TF frame for odometry

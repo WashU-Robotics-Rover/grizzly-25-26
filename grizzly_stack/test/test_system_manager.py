@@ -7,15 +7,22 @@ This module tests:
 - State publishing
 - Invalid transition handling
 - State history tracking
+- Layer manager integration
+- Layer-based node management
 """
 
 import unittest
+from unittest.mock import Mock, MagicMock, patch, call
 import rclpy
 from rclpy.lifecycle import TransitionCallbackReturn
 from grizzly_stack.core.system_manager import SystemManager
+from grizzly_stack.core.layer_manager import LayerManager
 from grizzly_interfaces.msg import OperationalState
 from grizzly_interfaces.srv import ChangeState
 import time
+import yaml
+import os
+from ament_index_python.packages import get_package_share_directory
 
 
 class TestSystemManagerStateMachine(unittest.TestCase):
@@ -131,30 +138,50 @@ class TestSystemManagerStateMachine(unittest.TestCase):
         self.assertEqual(last_entry['reason'], "History test")
         self.assertIsNotNone(last_entry['timestamp'])
     
-    def test_state_transition_callback_called(self):
-        """Test that _on_state_transition is called during state changes."""
-        # Override the callback to track if it was called
-        callback_called = {'called': False, 'old': None, 'new': None}
-        
-        original_callback = self.node._on_state_transition
-        def tracking_callback(old_state, new_state):
-            callback_called['called'] = True
-            callback_called['old'] = old_state
-            callback_called['new'] = new_state
-            original_callback(old_state, new_state)
-        
-        self.node._on_state_transition = tracking_callback
+    def test_state_transition_delegates_to_layer_manager(self):
+        """Test that state transitions delegate to layer manager."""
+        # Mock the layer manager's handle_state_transition method
+        original_handle = self.node._layer_manager.handle_state_transition
+        mock_handle = Mock()
+        self.node._layer_manager.handle_state_transition = mock_handle
         
         # Perform a transition
         request = ChangeState.Request()
-        request.requested_state = OperationalState.STANDBY
+        request.requested_state = OperationalState.AUTONOMOUS
+        request.reason = "Layer manager test"
+        
+        # First set state to STANDBY to make AUTONOMOUS valid
+        self.node._current_state = OperationalState.STANDBY
+        
         response = ChangeState.Response()
         self.node._handle_state_change_request(request, response)
         
-        # Verify callback was called
-        self.assertTrue(callback_called['called'])
-        self.assertEqual(callback_called['old'], OperationalState.STARTUP)
-        self.assertEqual(callback_called['new'], OperationalState.STANDBY)
+        # Verify layer manager was called
+        mock_handle.assert_called_once_with(
+            OperationalState.STANDBY,
+            OperationalState.AUTONOMOUS
+        )
+        
+        # Restore original method
+        self.node._layer_manager.handle_state_transition = original_handle
+    
+    def test_layer_manager_initialized(self):
+        """Test that layer manager is initialized during node creation."""
+        self.assertIsNotNone(self.node._layer_manager)
+        self.assertIsInstance(self.node._layer_manager, LayerManager)
+    
+    def test_layer_manager_node_states_initialized(self):
+        """Test that node states are initialized from layer configuration."""
+        # After configuration, layer manager should have nodes from config
+        all_layers = self.node._layer_manager.get_all_layers()
+        self.assertGreater(len(all_layers), 0)
+        
+        # Check that node states were initialized
+        for layer_name in all_layers:
+            layer_nodes = self.node._layer_manager.get_layer_nodes(layer_name)
+            for node_name in layer_nodes:
+                # Node states should be initialized to 'inactive' during config
+                self.assertIn(node_name, self.node._node_states)
     
     def test_state_name_helper(self):
         """Test the _state_name helper function."""
@@ -281,6 +308,9 @@ class TestSystemManagerLifecycle(unittest.TestCase):
         """Test that on_configure returns SUCCESS."""
         result = self.node.on_configure(None)
         self.assertEqual(result, TransitionCallbackReturn.SUCCESS)
+        
+        # Verify layer manager is initialized
+        self.assertIsNotNone(self.node._layer_manager)
     
     def test_on_activate_success(self):
         """Test that on_activate returns SUCCESS."""
@@ -301,6 +331,211 @@ class TestSystemManagerLifecycle(unittest.TestCase):
         self.node.on_activate(None)
         result = self.node.on_shutdown(None)
         self.assertEqual(result, TransitionCallbackReturn.SUCCESS)
+    
+    def test_layer_manager_created_on_init(self):
+        """Test that layer manager is created during node initialization."""
+        # Layer manager is created in __init__, not on_configure
+        self.assertIsNotNone(self.node._layer_manager)
+        self.assertIsInstance(self.node._layer_manager, LayerManager)
+
+
+class TestSystemManagerLayerIntegration(unittest.TestCase):
+    """Test SystemManager integration with LayerManager."""
+    
+    @classmethod
+    def setUpClass(cls):
+        """Initialize ROS 2 once for all tests."""
+        rclpy.init()
+    
+    @classmethod
+    def tearDownClass(cls):
+        """Shutdown ROS 2 after all tests."""
+        rclpy.shutdown()
+    
+    def setUp(self):
+        """Create a fresh SystemManager node before each test."""
+        self.node = SystemManager()
+        self.node.on_configure(None)
+        self.node.on_activate(None)
+    
+    def tearDown(self):
+        """Clean up the node after each test."""
+        self.node.destroy_node()
+    
+    def test_layer_manager_handles_autonomous_transition(self):
+        """Test that layer manager handles AUTONOMOUS state transition."""
+        # Mock layer manager to track calls
+        original_handle = self.node._layer_manager.handle_state_transition
+        call_history = []
+        
+        def track_calls(old_state, new_state):
+            call_history.append((old_state, new_state))
+            original_handle(old_state, new_state)
+        
+        self.node._layer_manager.handle_state_transition = track_calls
+        
+        # Transition to STANDBY then AUTONOMOUS
+        request = ChangeState.Request()
+        request.requested_state = OperationalState.STANDBY
+        response = ChangeState.Response()
+        self.node._handle_state_change_request(request, response)
+        
+        request.requested_state = OperationalState.AUTONOMOUS
+        response = ChangeState.Response()
+        self.node._handle_state_change_request(request, response)
+        
+        # Verify layer manager was called for AUTONOMOUS transition
+        self.assertIn((OperationalState.STANDBY, OperationalState.AUTONOMOUS), call_history)
+    
+    def test_layer_manager_handles_emergency_transition(self):
+        """Test that layer manager handles EMERGENCY state transition."""
+        # Mock layer manager to track calls
+        original_handle = self.node._layer_manager.handle_state_transition
+        call_history = []
+        
+        def track_calls(old_state, new_state):
+            call_history.append((old_state, new_state))
+            original_handle(old_state, new_state)
+        
+        self.node._layer_manager.handle_state_transition = track_calls
+        
+        # Transition to AUTONOMOUS then EMERGENCY
+        self.node._current_state = OperationalState.STANDBY
+        request = ChangeState.Request()
+        request.requested_state = OperationalState.AUTONOMOUS
+        response = ChangeState.Response()
+        self.node._handle_state_change_request(request, response)
+        
+        request.requested_state = OperationalState.EMERGENCY
+        response = ChangeState.Response()
+        self.node._handle_state_change_request(request, response)
+        
+        # Verify layer manager was called for EMERGENCY transition
+        self.assertIn((OperationalState.AUTONOMOUS, OperationalState.EMERGENCY), call_history)
+    
+    def test_layer_manager_handles_shutdown_transition(self):
+        """Test that layer manager handles SHUTDOWN state transition."""
+        # Mock layer manager to track calls
+        original_handle = self.node._layer_manager.handle_state_transition
+        call_history = []
+        
+        def track_calls(old_state, new_state):
+            call_history.append((old_state, new_state))
+            original_handle(old_state, new_state)
+        
+        self.node._layer_manager.handle_state_transition = track_calls
+        
+        # Transition to STANDBY then SHUTDOWN
+        request = ChangeState.Request()
+        request.requested_state = OperationalState.STANDBY
+        response = ChangeState.Response()
+        self.node._handle_state_change_request(request, response)
+        
+        request.requested_state = OperationalState.SHUTDOWN
+        response = ChangeState.Response()
+        self.node._handle_state_change_request(request, response)
+        
+        # Verify layer manager was called for SHUTDOWN transition
+        self.assertIn((OperationalState.STANDBY, OperationalState.SHUTDOWN), call_history)
+
+
+class TestLayerManagerConfigLoading(unittest.TestCase):
+    """Test layer manager configuration loading from YAML."""
+    
+    @classmethod
+    def setUpClass(cls):
+        """Initialize ROS 2 once for all tests."""
+        rclpy.init()
+    
+    @classmethod
+    def tearDownClass(cls):
+        """Shutdown ROS 2 after all tests."""
+        rclpy.shutdown()
+    
+    def setUp(self):
+        """Create a mock node for layer manager."""
+        self.mock_node = Mock()
+        self.mock_node.get_logger.return_value = Mock()
+        self.mock_node.get_logger.return_value.info = Mock()
+        self.mock_node.get_logger.return_value.debug = Mock()
+        self.mock_node.get_logger.return_value.warn = Mock()
+        self.mock_node.get_logger.return_value.error = Mock()
+    
+    def test_layer_manager_loads_config(self):
+        """Test that layer manager loads configuration from YAML."""
+        manager = LayerManager(self.mock_node)
+        
+        # Should have loaded layers from config
+        all_layers = manager.get_all_layers()
+        self.assertGreater(len(all_layers), 0)
+        
+        # Should have at least the standard layers
+        expected_layers = ['perception', 'planning', 'control']
+        for layer in expected_layers:
+            self.assertIn(layer, all_layers)
+    
+    def test_layer_manager_has_nodes_in_layers(self):
+        """Test that layers contain expected nodes."""
+        manager = LayerManager(self.mock_node)
+        
+        # Check perception layer
+        perception_nodes = manager.get_layer_nodes('perception')
+        self.assertIn('perception_node', perception_nodes)
+        
+        # Check planning layer
+        planning_nodes = manager.get_layer_nodes('planning')
+        self.assertIn('planner_node', planning_nodes)
+        
+        # Check control layer
+        control_nodes = manager.get_layer_nodes('control')
+        self.assertIn('control_node', control_nodes)
+    
+    def test_layer_manager_fallback_on_config_error(self):
+        """Test that layer manager falls back to defaults on config error."""
+        # Mock the config file to not exist
+        with patch('grizzly_stack.core.layer_manager.get_package_share_directory') as mock_pkg:
+            mock_pkg.side_effect = Exception("Package not found")
+            
+            manager = LayerManager(self.mock_node)
+            
+            # Should still have default layers
+            all_layers = manager.get_all_layers()
+            self.assertGreater(len(all_layers), 0)
+    
+    @patch('grizzly_stack.core.layer_manager.get_package_share_directory')
+    @patch('builtins.open')
+    def test_layer_manager_loads_custom_config(self, mock_open, mock_pkg):
+        """Test that layer manager loads custom configuration."""
+        # Setup mock config
+        mock_pkg.return_value = '/mock/package/share'
+        
+        custom_config = {
+            'layers': {
+                'perception': {
+                    'nodes': ['perception_node', 'custom_node'],
+                    'startup_order': 1
+                },
+                'planning': {
+                    'nodes': ['planner_node'],
+                    'startup_order': 2
+                }
+            }
+        }
+        
+        mock_file = MagicMock()
+        mock_open.return_value.__enter__.return_value = mock_file
+        mock_open.return_value.__exit__ = Mock()
+        
+        # Mock yaml.safe_load to return our custom config
+        with patch('grizzly_stack.core.layer_manager.yaml.safe_load') as mock_yaml:
+            mock_yaml.return_value = custom_config
+            
+            manager = LayerManager(self.mock_node)
+            
+            # Verify custom config was loaded
+            perception_nodes = manager.get_layer_nodes('perception')
+            self.assertIn('perception_node', perception_nodes)
+            self.assertIn('custom_node', perception_nodes)
 
 
 if __name__ == '__main__':

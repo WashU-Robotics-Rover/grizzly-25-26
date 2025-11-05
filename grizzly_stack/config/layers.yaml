@@ -1,0 +1,55 @@
+# Layer Configuration for Grizzly Robotics Stack
+#
+# This configuration file defines the layer structure for node organization.
+# Layers group related nodes together, allowing the system to manage them
+# as units rather than individually. This prevents the system manager and
+# lifecycle manager from becoming bloated as more nodes are added.
+#
+# Format:
+#   layers:
+#     layer_name:
+#       nodes:
+#         - node_name_1
+#         - node_name_2
+#       startup_order: 1  # Optional: order for startup sequence
+#
+# Usage:
+#   - Add new nodes to existing layers by adding them to the nodes list
+#   - Create new layers by adding new entries under layers
+#   - The startup_order determines the order layers are configured during startup
+#   - Lower numbers are configured first
+
+layers:
+  perception:
+    nodes:
+      - perception_node
+    startup_order: 1
+    description: "Perception and sensor processing layer"
+  
+  planning:
+    nodes:
+      - planner_node
+    startup_order: 2
+    description: "Path and behavior planning layer"
+  
+  control:
+    nodes:
+      - control_node
+    startup_order: 3
+    description: "Motor and actuator control layer"
+  
+  # Example: Future layers can be added here
+  # navigation:
+  #   nodes:
+  #     - navigation_node
+  #     - localization_node
+  #   startup_order: 2
+  #   description: "Navigation and localization layer"
+  #
+  # teleoperation:
+  #   nodes:
+  #     - teleop_node
+  #     - joystick_node
+  #   startup_order: 4
+  #   description: "Teleoperation and manual control layer"
+

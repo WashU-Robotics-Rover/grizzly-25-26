@@ -126,12 +126,15 @@ grizzly-25-26/
 │       └── ChangeState.srv
 └── grizzly_stack/              # Main software stack
     ├── config/
-    │   └── core.yaml           # System configuration
+    │   ├── core.yaml           # System configuration
+    │   └── layers.yaml         # Layer configuration (node organization)
     ├── launch/
     │   └── grizzly_minimal.launch.py
     ├── src/grizzly_stack/
     │   └── core/
-    │       └── system_manager.py
+    │       ├── system_manager.py  # Operational state management
+    │       ├── layer_manager.py   # Layer-based lifecycle management
+    │       └── lifecycle_manager.py  # Startup orchestration
     └── test/                   # Test suite
         ├── test_basic.py
         └── test_system_manager.py
@@ -140,7 +143,7 @@ grizzly-25-26/
 ### System Components
 
 #### System Manager
-ROS 2 Lifecycle Node that manages the rover's operational state machine.
+ROS 2 Lifecycle Node that manages the rover's operational state machine and delegates lifecycle control to the Layer Manager.
 
 **States**: STARTUP, STANDBY, AUTONOMOUS, MANUAL, EMERGENCY, ERROR, SHUTDOWN
 
@@ -150,6 +153,19 @@ ROS 2 Lifecycle Node that manages the rover's operational state machine.
 
 **Services**:
 - `/system/change_state` - Request state transitions
+
+#### Layer Manager
+Manages lifecycle transitions for nodes organized into logical layers. Nodes are grouped into layers (e.g., perception, planning, control) and activated/deactivated together based on operational state. This architecture prevents the system manager from becoming bloated as more nodes are added.
+
+**Key Features**:
+- Layer-based node organization (configured in `layers.yaml`)
+- Automatic activation/deactivation based on operational state
+- State-layer mapping (e.g., AUTONOMOUS activates perception, planning, control layers)
+- Async lifecycle transitions to avoid blocking
+
+**Layer Configuration**: See `grizzly_stack/config/layers.yaml`
+
+For detailed layer management documentation, see [docs/STATE_MANAGEMENT_GUIDE.md](docs/STATE_MANAGEMENT_GUIDE.md#layer-management).
 
 #### Custom Messages
 
@@ -201,12 +217,45 @@ ros2 lifecycle set /system_manager activate
 
 Configuration files are located in `grizzly_stack/config/`:
 
+### System Configuration (`core.yaml`)
+
 ```yaml
-# core.yaml
 system_manager:
   ros__parameters:
     health_rate_hz: 1.0  # Health status publish rate (Hz)
 ```
+
+### Layer Configuration (`layers.yaml`)
+
+Defines how nodes are organized into layers for lifecycle management:
+
+```yaml
+layers:
+  perception:
+    nodes:
+      - perception_node
+    startup_order: 1
+    description: "Perception and sensor processing layer"
+  
+  planning:
+    nodes:
+      - planner_node
+    startup_order: 2
+    description: "Path and behavior planning layer"
+  
+  control:
+    nodes:
+      - control_node
+    startup_order: 3
+    description: "Motor and actuator control layer"
+```
+
+**Adding Nodes to Layers**: Simply add node names to the `nodes` list in the appropriate layer. The layer manager will automatically manage them during operational state transitions.
+
+**Layer-State Mapping**: The layer manager automatically activates/deactivates layers based on operational state:
+- **AUTONOMOUS/MANUAL**: Activates perception, planning, control layers
+- **STANDBY/STARTUP**: No operational layers active
+- **EMERGENCY/ERROR/SHUTDOWN**: Deactivates all operational layers immediately
 
 Modify configuration files and relaunch (no rebuild required).
 
@@ -253,6 +302,7 @@ For detailed troubleshooting, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 ✅ **Implemented:**
 - Cross-platform CLI tool (`grizzly.py`)
 - System manager with lifecycle management
+- Layer-based node management system
 - Operational state machine (7 states)
 - Custom ROS 2 interfaces
 - Automated testing (21 tests)
