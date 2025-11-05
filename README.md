@@ -261,10 +261,20 @@ Modify configuration files and relaunch (no rebuild required).
 
 ## Documentation
 
-- **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development workflow, coding guidelines, and contribution process
-- **[STATE_MACHINE_GUIDE.md](docs/STATE_MACHINE_GUIDE.md)** - Operational state machine reference and usage
-- **[TESTING.md](docs/TESTING.md)** - Testing guide and test suite documentation
-- **[TEST_DETAILS.md](docs/TEST_DETAILS.md)** - Detailed test implementation information
+The documentation is available in multiple formats:
+
+- **Interactive Docs (Docsify)**: View the documentation with a modern, searchable interface
+  - **Local**: Serve locally with `docsify serve docs` (requires `npm install -g docsify-cli`)
+  - **GitHub Pages**: Available at [https://washu-robotics-rover.github.io/grizzly-25-26/](https://washu-robotics-rover.github.io/grizzly-25-26/) (when configured)
+
+- **Markdown Files**: Direct access to documentation files
+  - **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development workflow, coding guidelines, and contribution process
+  - **[STATE_MACHINE_GUIDE.md](docs/STATE_MACHINE_GUIDE.md)** - Operational state machine reference and usage
+  - **[STATE_MANAGEMENT_GUIDE.md](docs/STATE_MANAGEMENT_GUIDE.md)** - Comprehensive state management guide
+  - **[LIFECYCLE_MANAGER.md](docs/LIFECYCLE_MANAGER.md)** - Lifecycle manager documentation
+  - **[PERCEPTION_SYSTEM.md](docs/PERCEPTION_SYSTEM.md)** - Perception system documentation
+  - **[TESTING.md](docs/TESTING.md)** - Testing guide and test suite documentation
+  - **[TEST_DETAILS.md](docs/TEST_DETAILS.md)** - Detailed test implementation information
 
 ## Troubleshooting
 
