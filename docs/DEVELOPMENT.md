@@ -92,14 +92,17 @@ grizzly_stack/
 ├── setup.py                 # Python package setup
 ├── setup.cfg                # Python package configuration
 ├── config/                  # Configuration files (YAML)
-│   └── core.yaml           # System parameters
+│   ├── core.yaml           # System parameters
+│   └── layers.yaml         # Layer configuration (node organization)
 ├── launch/                  # Launch files
 │   └── grizzly_minimal.launch.py
 ├── src/grizzly_stack/       # Python source code
 │   ├── __init__.py
 │   └── core/
 │       ├── __init__.py
-│       └── system_manager.py
+│       ├── system_manager.py    # Operational state management
+│       ├── layer_manager.py      # Layer-based lifecycle management
+│       └── lifecycle_manager.py  # Startup orchestration
 └── test/                    # Unit tests
     ├── test_basic.py
     └── test_system_manager.py
@@ -108,8 +111,9 @@ grizzly_stack/
 ### Code Organization
 
 - **Lifecycle Nodes**: All major system components use Lifecycle Nodes for deterministic startup/shutdown
+- **Layer-Based Management**: Nodes are organized into layers for scalable lifecycle management
 - **Configuration**: Parameters defined in YAML files under `config/`
-- **Launch Files**: Use `TimerAction` for automatic lifecycle transitions
+- **Launch Files**: Use lifecycle manager for deterministic startup orchestration
 - **Messages**: Custom messages in `grizzly_interfaces` package
 
 ## Architecture Guidelines
@@ -409,6 +413,50 @@ def generate_launch_description():
         )
     ])
 ```
+
+### Layer Configuration
+
+The layer system organizes nodes into logical groups for lifecycle management. Configure layers in `grizzly_stack/config/layers.yaml`:
+
+```yaml
+layers:
+  perception:
+    nodes:
+      - perception_node
+      - sensor_fusion_node  # Multiple nodes per layer
+    startup_order: 1
+    description: "Perception and sensor processing layer"
+  
+  planning:
+    nodes:
+      - planner_node
+    startup_order: 2
+    description: "Path and behavior planning layer"
+```
+
+**Adding a New Node to an Existing Layer**:
+1. Add the node name to the `nodes` list in `layers.yaml`
+2. No code changes needed - the layer manager automatically detects and manages it
+
+**Creating a New Layer**:
+1. Add layer configuration to `layers.yaml`
+2. Update `LayerManager._state_layer_mapping` to specify when the layer should be active
+3. Rebuild and test
+
+**Example: Adding a Node to Perception Layer**
+```yaml
+# layers.yaml
+layers:
+  perception:
+    nodes:
+      - perception_node
+      - new_sensor_node  # ← Just add here
+    startup_order: 1
+```
+
+The lifecycle manager will automatically detect and configure the new node during startup, and the layer manager will activate/deactivate it along with other nodes in the layer based on operational state.
+
+For detailed layer management documentation, see [State Management Guide](STATE_MANAGEMENT_GUIDE.md#layer-management).
 
 ## Debugging Tips
 
