@@ -47,12 +47,16 @@ Commands:
   run          Launch the Grizzly minimal system
   test         Run the test suite
   update       Fetch and update from the latest GitHub commit on main
+  web          Launch web interface with rosbridge server
 
 Examples:
   ./grizzly.py install              # Download and build latest release
   ./grizzly.py build                # Build the current workspace
   ./grizzly.py build --clean        # Clean build from scratch
   ./grizzly.py run                  # Launch the system
+  ./grizzly.py web                  # Launch web interface (auto-starts rosbridge)
+  ./grizzly.py web --port 3000      # Launch web interface on custom port
+  ./grizzly.py web --no-rosbridge   # Launch only web server
   ./grizzly.py test                 # Run all tests
   ./grizzly.py test -v              # Run tests with verbose output
   ./grizzly.py test --coverage      # Run tests with coverage report
@@ -118,6 +122,17 @@ Platform: {system}
         update_parser.add_argument('--rebuild', action='store_true',
                                   help='Rebuild after updating')
         
+        # Web command
+        web_parser = subparsers.add_parser('web', help='Launch web interface with rosbridge')
+        web_parser.add_argument('--port', type=int, default=8000,
+                               help='Port for web server (default: 8000)')
+        web_parser.add_argument('--rosbridge-port', type=int, default=9090,
+                               help='Port for rosbridge server (default: 9090)')
+        web_parser.add_argument('--no-rosbridge', action='store_true',
+                               help='Launch only the web server (assume rosbridge is already running)')
+        web_parser.add_argument('--no-browser', action='store_true',
+                               help='Do not open browser automatically')
+        
         args = parser.parse_args()
         
         if not args.command:
@@ -137,6 +152,8 @@ Platform: {system}
             return self.cmd_clean(args)
         elif args.command == 'update':
             return self.cmd_update(args)
+        elif args.command == 'web':
+            return self.cmd_web(args)
     
     # ========================================================================
     # INSTALL COMMAND
@@ -826,6 +843,178 @@ source install/setup.zsh
         except Exception as e:
             print(f"\n❌ Error during update: {e}")
             return 1
+    
+    # ========================================================================
+    # WEB COMMAND
+    # ========================================================================
+    
+    def cmd_web(self, args):
+        """Web command - launch web interface with rosbridge server."""
+        print(f"\n{'='*70}")
+        print(f"  Grizzly Web Interface")
+        print(f"{'='*70}")
+        print(f"Platform: {self.system}")
+        print(f"Workspace: {self.workspace_root}")
+        print(f"Web Port: {args.port}")
+        print(f"Rosbridge Port: {args.rosbridge_port}")
+        print(f"{'='*70}\n")
+        
+        # Check if grizzly_command directory exists
+        web_dir = self.workspace_root / "grizzly_command"
+        if not web_dir.exists():
+            print(f"❌ Error: grizzly_command directory not found")
+            print(f"   Expected: {web_dir}")
+            return 1
+        
+        # Check if index.html exists
+        index_file = web_dir / "index.html"
+        if not index_file.exists():
+            print(f"❌ Error: index.html not found")
+            print(f"   Expected: {index_file}")
+            return 1
+        
+        # Verify workspace is built (needed for rosbridge to find grizzly_interfaces)
+        if not args.no_rosbridge:
+            if not self.check_and_source_workspace():
+                print("\n❌ Workspace must be built before launching rosbridge")
+                print("   Run: ./grizzly.py build")
+                return 1
+        
+        import threading
+        import http.server
+        import socketserver
+        import webbrowser
+        import time
+        
+        # Flag to track if we should continue running
+        keep_running = True
+        rosbridge_process = None
+        
+        # Start rosbridge in background if requested
+        if not args.no_rosbridge:
+            print("🌉 Starting rosbridge_server...")
+            print(f"   WebSocket URL: ws://localhost:{args.rosbridge_port}\n")
+            
+            # Build command to launch rosbridge with workspace sourced
+            if self.system == "Darwin":
+                rosbridge_cmd = f"""
+eval "$(conda shell.zsh hook)"
+conda activate ros_env
+source /opt/anaconda3/envs/ros_env/setup.zsh
+source {self.workspace_root}/install/setup.zsh
+ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridge_port}
+"""
+                rosbridge_process = subprocess.Popen(
+                    rosbridge_cmd,
+                    shell=True,
+                    executable="/bin/zsh",
+                    cwd=self.workspace_root
+                )
+            elif self.system == "Linux":
+                rosbridge_cmd = f"""
+source /opt/ros/humble/setup.bash
+source {self.workspace_root}/install/setup.bash
+ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridge_port}
+"""
+                rosbridge_process = subprocess.Popen(
+                    rosbridge_cmd,
+                    shell=True,
+                    executable="/bin/bash",
+                    cwd=self.workspace_root
+                )
+            else:
+                print(f"⚠️  Warning: Automatic rosbridge launch not supported on {self.system}")
+                print("   Please start rosbridge manually in another terminal:")
+                print(f"   ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridge_port}")
+            
+            # Give rosbridge time to start
+            time.sleep(2)
+        else:
+            print("⚠️  Skipping rosbridge launch (--no-rosbridge specified)")
+            print(f"   Make sure rosbridge is running on port {args.rosbridge_port}\n")
+        
+        # Create HTTP server with CORS support
+        class CORSRequestHandler(http.server.SimpleHTTPRequestHandler):
+            def end_headers(self):
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+                super().end_headers()
+            
+            def log_message(self, format, *args):
+                # Suppress standard logging, we'll do our own
+                pass
+        
+        # Start web server in a thread
+        def run_server():
+            nonlocal keep_running
+            try:
+                os.chdir(web_dir)
+                with socketserver.TCPServer(("", args.port), CORSRequestHandler) as httpd:
+                    print("🌐 Web server started!")
+                    print(f"   URL: http://localhost:{args.port}")
+                    print(f"   Directory: {web_dir}\n")
+                    
+                    while keep_running:
+                        httpd.handle_request()
+                        
+            except OSError as e:
+                if e.errno == 48 or e.errno == 98:  # Address already in use
+                    print(f"\n❌ Error: Port {args.port} is already in use!")
+                    print(f"   Try a different port: ./grizzly.py web --port {args.port + 1}")
+                else:
+                    print(f"\n❌ Error starting web server: {e}")
+                keep_running = False
+        
+        server_thread = threading.Thread(target=run_server, daemon=True)
+        server_thread.start()
+        
+        # Give server time to start
+        time.sleep(1)
+        
+        if not keep_running:
+            # Server failed to start
+            if rosbridge_process:
+                rosbridge_process.terminate()
+            return 1
+        
+        # Open browser if requested
+        if not args.no_browser:
+            print("🚀 Opening browser...")
+            time.sleep(0.5)
+            webbrowser.open(f"http://localhost:{args.port}")
+        
+        print(f"\n{'='*70}")
+        print("✅ Grizzly Web Interface is running!")
+        print(f"{'='*70}")
+        print(f"\n📱 Access the interface at: http://localhost:{args.port}")
+        if not args.no_rosbridge:
+            print(f"🌉 Rosbridge WebSocket: ws://localhost:{args.rosbridge_port}")
+        print("\n💡 Make sure the Grizzly system is running:")
+        print("   ./grizzly.py run")
+        print("\n⏹  Press Ctrl+C to stop\n")
+        print(f"{'='*70}\n")
+        
+        # Keep main thread alive
+        try:
+            while keep_running:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\n\n⏹  Shutting down...")
+            keep_running = False
+            
+            # Terminate rosbridge if we started it
+            if rosbridge_process:
+                print("   Stopping rosbridge...")
+                rosbridge_process.terminate()
+                try:
+                    rosbridge_process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    rosbridge_process.kill()
+            
+            print("👋 Goodbye!\n")
+        
+        return 0
     
     # ========================================================================
     # RUN COMMAND

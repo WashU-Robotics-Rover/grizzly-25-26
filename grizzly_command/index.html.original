@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grizzly Rover Control Interface</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Load roslib.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🐻 Grizzly Rover System Monitor</h1>
+            <div class="connection-status">
+                <span class="status-indicator" id="connectionIndicator"></span>
+                <span id="connectionStatus">Disconnected</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- System State Panel -->
+            <section class="panel state-panel">
+                <h2>Operational State</h2>
+                <div class="state-display">
+                    <div class="state-badge" id="stateBadge">
+                        <span id="stateName">UNKNOWN</span>
+                    </div>
+                    <div class="state-info">
+                        <p><strong>Description:</strong> <span id="stateDescription">Waiting for data...</span></p>
+                        <p><strong>Last Updated:</strong> <span id="stateTimestamp">--</span></p>
+                        <p><strong>State Value:</strong> <span id="stateValue">--</span></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Health Status Panel -->
+            <section class="panel health-panel">
+                <h2>System Health</h2>
+                <div class="health-display">
+                    <div class="health-indicator" id="healthIndicator">
+                        <svg width="80" height="80" viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="35" fill="none" stroke="#e0e0e0" stroke-width="8"/>
+                            <circle id="healthCircle" cx="40" cy="40" r="35" fill="none" stroke="#4CAF50" 
+                                    stroke-width="8" stroke-dasharray="220" stroke-dashoffset="0" 
+                                    transform="rotate(-90 40 40)"/>
+                        </svg>
+                        <div class="health-icon">❤️</div>
+                    </div>
+                    <div class="health-info">
+                        <p id="healthMessage">Waiting for health data...</p>
+                        <p><strong>Last Update:</strong> <span id="healthTimestamp">--</span></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- State Control Panel -->
+            <section class="panel control-panel">
+                <h2>State Controls</h2>
+                <p class="control-description">Request state transitions:</p>
+                <div class="button-grid">
+                    <button class="state-button standby" onclick="requestStateChange(1, 'User requested STANDBY')">
+                        <span class="button-icon">⏸️</span>
+                        <span>STANDBY</span>
+                    </button>
+                    <button class="state-button autonomous" onclick="requestStateChange(2, 'User requested AUTONOMOUS')">
+                        <span class="button-icon">🤖</span>
+                        <span>AUTONOMOUS</span>
+                    </button>
+                    <button class="state-button manual" onclick="requestStateChange(3, 'User requested MANUAL')">
+                        <span class="button-icon">🎮</span>
+                        <span>MANUAL</span>
+                    </button>
+                    <button class="state-button emergency" onclick="requestStateChange(4, 'User triggered EMERGENCY')">
+                        <span class="button-icon">🚨</span>
+                        <span>EMERGENCY</span>
+                    </button>
+                </div>
+                <div class="service-response" id="serviceResponse"></div>
+            </section>
+
+            <!-- State History Panel -->
+            <section class="panel history-panel">
+                <h2>State History</h2>
+                <div class="history-container">
+                    <ul id="stateHistory" class="history-list">
+                        <li class="history-placeholder">No state changes yet...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ROS Connection Settings -->
+            <section class="panel settings-panel">
+                <h2>ROS Bridge Settings</h2>
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label for="rosBridgeUrl">ROS Bridge URL:</label>
+                        <input type="text" id="rosBridgeUrl" value="ws://localhost:9090" />
+                    </div>
+                    <button id="reconnectButton" onclick="reconnect()">Reconnect</button>
+                </div>
+                <div class="settings-info">
+                    <p><strong>Note:</strong> Make sure rosbridge_server is running:</p>
+                    <code>ros2 launch rosbridge_server rosbridge_websocket_launch.xml</code>
+                </div>
+            </section>
+
+            <!-- System Info Panel -->
+            <section class="panel info-panel">
+                <h2>System Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h3>Available States</h3>
+                        <ul class="state-list">
+                            <li><span class="state-code">0</span> STARTUP</li>
+                            <li><span class="state-code">1</span> STANDBY</li>
+                            <li><span class="state-code">2</span> AUTONOMOUS</li>
+                            <li><span class="state-code">3</span> MANUAL</li>
+                            <li><span class="state-code">4</span> EMERGENCY</li>
+                            <li><span class="state-code">5</span> ERROR</li>
+                            <li><span class="state-code">6</span> SHUTDOWN</li>
+                        </ul>
+                    </div>
+                    <div class="info-item">
+                        <h3>Topics</h3>
+                        <ul class="topic-list">
+                            <li><code>/system/state</code> - Operational State</li>
+                            <li><code>/system/health</code> - Health Status</li>
+                        </ul>
+                    </div>
+                    <div class="info-item">
+                        <h3>Services</h3>
+                        <ul class="service-list">
+                            <li><code>/system/change_state</code> - Request state change</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 Grizzly Rover Team | WashU Robotics Rover</p>
+            <p>Built with <a href="http://wiki.ros.org/roslibjs" target="_blank">roslibjs</a></p>
+        </footer>
+    </div>
+
+    <!-- Load our application JavaScript -->
+    <script src="js/app.js"></script>
+</body>
+</html>
