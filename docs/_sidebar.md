@@ -17,6 +17,9 @@
   - [Topics & Services](ROS_REFERENCE.md#topics-and-services)
   - [Messages & Interfaces](ROS_REFERENCE.md#messages-and-interfaces)
 
+- **🌐 Web Interface**
+  - [Web Interface Guide](WEB_INTERFACE.md)
+
 - **🧪 Testing**
   - [Testing Guide](TESTING.md)
   - [Test Details](TEST_DETAILS.md)
