@@ -1,0 +1,560 @@
+/**
+ * Grizzly Rover Web Interface
+ * Uses roslibjs to connect to ROS via rosbridge_server
+ */
+
+// Global variables
+let ros = null;
+let stateListener = null;
+let healthListener = null;
+let stateChangeClient = null;
+let stateHistory = [];
+const MAX_HISTORY_ITEMS = 20;
+
+// Health monitoring
+let healthTimeout = null;
+const HEALTH_TIMEOUT_MS = 5000; // 5 seconds without health update triggers warning
+let lastHealthTime = null;
+let isHealthy = false;
+
+// State name mapping
+const STATE_NAMES = {
+    0: 'STARTUP',
+    1: 'STANDBY',
+    2: 'AUTONOMOUS',
+    3: 'MANUAL',
+    4: 'EMERGENCY',
+    5: 'ERROR',
+    6: 'SHUTDOWN',
+    99: 'UNKNOWN'  // Special state for lost health
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing Grizzly Rover Web Interface...');
+    connect();
+});
+
+/**
+ * Connect to ROS via rosbridge
+ */
+function connect() {
+    const url = document.getElementById('rosBridgeUrl').value;
+    console.log('Connecting to ROS Bridge at:', url);
+    
+    // Create ROS connection
+    ros = new ROSLIB.Ros({
+        url: url
+    });
+    
+    // Connection event handlers
+    ros.on('connection', function() {
+        console.log('Connected to ROS Bridge!');
+        console.log('About to update connection status...');
+        updateConnectionStatus(true);
+        console.log('About to setup subscribers...');
+        setupROSSubscribers();
+        console.log('About to setup services...');
+        setupROSServices();
+        console.log('Connection setup complete!');
+    });
+    
+    ros.on('error', function(error) {
+        console.error('Error connecting to ROS Bridge:', error);
+        updateConnectionStatus(false);
+        showNotification('Connection Error: ' + error, 'error');
+    });
+    
+    ros.on('close', function() {
+        console.log('Connection to ROS Bridge closed.');
+        updateConnectionStatus(false);
+        showNotification('Disconnected from ROS Bridge', 'error');
+    });
+}
+
+/**
+ * Reconnect to ROS Bridge
+ */
+function reconnect() {
+    console.log('Reconnecting...');
+    if (ros) {
+        ros.close();
+    }
+    setTimeout(connect, 500);
+}
+
+/**
+ * Update connection status UI
+ */
+function updateConnectionStatus(connected) {
+    const indicator = document.getElementById('connectionIndicator');
+    const ping = document.getElementById('connectionPing');
+    const serviceReady = document.getElementById('serviceReady');
+    const status = document.getElementById('connectionStatus');
+    
+    if (connected) {
+        if (indicator) {
+            indicator.classList.remove('bg-red-500');
+            indicator.classList.add('bg-green-500', 'connected');
+        }
+        if (ping) {
+            ping.style.display = 'none';
+        }
+        if (status) {
+            status.textContent = 'Connected';
+            status.classList.remove('text-red-400');
+            status.classList.add('text-green-400', 'connected');
+        }
+    } else {
+        if (indicator) {
+            indicator.classList.remove('bg-green-500', 'connected');
+            indicator.classList.add('bg-red-500');
+        }
+        if (ping) {
+            ping.style.display = 'inline-flex';
+        }
+        if (status) {
+            status.textContent = 'Disconnected';
+            status.classList.remove('text-green-400', 'connected');
+            status.classList.add('text-red-400');
+        }
+        
+        // Reset service status when disconnected
+        if (serviceReady) {
+            serviceReady.textContent = 'NOT READY';
+            serviceReady.className = 'text-red-500';
+        }
+        
+        // Clear service client when disconnected
+        stateChangeClient = null;
+        
+        // Clear health monitoring
+        if (healthTimeout) {
+            clearTimeout(healthTimeout);
+            healthTimeout = null;
+        }
+        isHealthy = false;
+        lastHealthTime = null;
+    }
+}
+
+/**
+ * Setup ROS topic subscribers
+ */
+function setupROSSubscribers() {
+    // Unsubscribe from old listeners if they exist
+    if (stateListener) {
+        console.log('Unsubscribing from old state listener...');
+        stateListener.unsubscribe();
+        stateListener = null;
+    }
+    
+    if (healthListener) {
+        console.log('Unsubscribing from old health listener...');
+        healthListener.unsubscribe();
+        healthListener = null;
+    }
+    
+    // Reset health monitoring state to allow updates
+    if (healthTimeout) {
+        clearTimeout(healthTimeout);
+        healthTimeout = null;
+    }
+    isHealthy = true; // Reset to healthy state on reconnection
+    lastHealthTime = null;
+    
+    // Clear any connection warning messages
+    const serviceResponse = document.getElementById('serviceResponse');
+    if (serviceResponse) {
+        serviceResponse.classList.add('hidden');
+    }
+    
+    // Reset health display to show we're waiting for data
+    const healthMessage = document.getElementById('healthMessage');
+    if (healthMessage) {
+        healthMessage.textContent = 'WAITING FOR DATA...';
+        healthMessage.className = 'text-xs text-zinc-300 font-mono';
+    }
+    
+    // Reset state badge to default state while waiting for first update
+    const stateBadge = document.getElementById('stateBadge');
+    const stateName = document.getElementById('stateName');
+    const stateDescription = document.getElementById('stateDescription');
+    
+    if (stateBadge) {
+        stateBadge.className = 'bg-zinc-900 border border-zinc-800 p-6 mb-3';
+    }
+    
+    if (stateName) {
+        stateName.textContent = 'CONNECTING...';
+        stateName.className = 'text-3xl font-bold text-zinc-400 mb-1 tracking-wide';
+    }
+    
+    if (stateDescription) {
+        stateDescription.textContent = 'Waiting for state update...';
+        stateDescription.className = 'text-zinc-300';
+    }
+    
+    // Subscribe to /system/state topic
+    stateListener = new ROSLIB.Topic({
+        ros: ros,
+        name: '/system/state',
+        messageType: 'grizzly_interfaces/msg/OperationalState'
+    });
+    
+    stateListener.subscribe(function(message) {
+        console.log('Received state update:', message);
+        updateStateDisplay(message);
+        addToHistory(message);
+    });
+    
+    // Subscribe to /system/health topic
+    healthListener = new ROSLIB.Topic({
+        ros: ros,
+        name: '/system/health',
+        messageType: 'std_msgs/msg/String'
+    });
+    
+    healthListener.subscribe(function(message) {
+        console.log('Received health update:', message);
+        updateHealthDisplay(message);
+    });
+    
+    // Start health monitoring timeout
+    console.log('Starting health monitoring with', HEALTH_TIMEOUT_MS, 'ms timeout');
+    resetHealthTimeout();
+}
+
+/**
+ * Setup ROS service clients
+ */
+function setupROSServices() {
+    try {
+        // Service client for /system/change_state
+        stateChangeClient = new ROSLIB.Service({
+            ros: ros,
+            name: '/system/change_state',
+            serviceType: 'grizzly_interfaces/srv/ChangeState'
+        });
+        console.log('State change service client initialized:', stateChangeClient);
+        
+        // Update UI to show service is ready
+        const serviceReady = document.getElementById('serviceReady');
+        if (serviceReady) {
+            serviceReady.textContent = 'READY';
+            serviceReady.className = 'text-green-500';
+        }
+    } catch (error) {
+        console.error('Failed to initialize service client:', error);
+        const serviceReady = document.getElementById('serviceReady');
+        if (serviceReady) {
+            serviceReady.textContent = 'ERROR';
+            serviceReady.className = 'text-red-500';
+        }
+    }
+}
+
+/**
+ * Reset health timeout timer
+ */
+function resetHealthTimeout() {
+    // Clear existing timeout
+    if (healthTimeout) {
+        clearTimeout(healthTimeout);
+    }
+    
+    // Set new timeout
+    healthTimeout = setTimeout(onHealthTimeout, HEALTH_TIMEOUT_MS);
+}
+
+/**
+ * Called when health updates stop
+ */
+function onHealthTimeout() {
+    console.warn('Health timeout! No updates received for', HEALTH_TIMEOUT_MS, 'ms');
+    isHealthy = false;
+    
+    // Update state display to show UNKNOWN
+    const stateBadge = document.getElementById('stateBadge');
+    const stateName = document.getElementById('stateName');
+    const stateDescription = document.getElementById('stateDescription');
+    const healthMessage = document.getElementById('healthMessage');
+    
+    // Update the badge styling to show warning (but don't destroy child elements)
+    if (stateBadge) {
+        stateBadge.className = 'bg-zinc-900 border-2 border-yellow-500 p-6 mb-3 animate-pulse';
+    }
+    
+    if (stateName) {
+        stateName.textContent = 'UNKNOWN';
+        stateName.className = 'text-3xl font-bold text-yellow-300 mb-1 tracking-wide';
+    }
+    
+    if (stateDescription) {
+        stateDescription.textContent = 'System health updates lost';
+        stateDescription.className = 'text-zinc-300';
+    }
+    
+    if (healthMessage) {
+        healthMessage.textContent = '⚠️ NO HEALTH UPDATES RECEIVED';
+        healthMessage.className = 'text-xs text-yellow-300 font-mono font-bold';
+    }
+    
+    // Show warning notification
+    showServiceResponse('⚠️ WARNING: System health updates lost. Connection may be unstable.', false);
+}
+
+/**
+ * Update state display with new state data
+ */
+function updateStateDisplay(stateMsg) {
+    const stateBadge = document.getElementById('stateBadge');
+    const stateName = document.getElementById('stateName');
+    const stateDescription = document.getElementById('stateDescription');
+    const stateTimestamp = document.getElementById('stateTimestamp');
+    const stateValue = document.getElementById('stateValue');
+    
+    // Get state name from value
+    const stateNameStr = STATE_NAMES[stateMsg.state] || 'UNKNOWN';
+    
+    // Define state-specific colors based on the reference panel
+    const stateColors = {
+        0: { bg: 'bg-zinc-800', border: 'border-zinc-700', text: 'text-zinc-300' },      // STARTUP
+        1: { bg: 'bg-blue-900', border: 'border-blue-700', text: 'text-blue-300' },      // STANDBY
+        2: { bg: 'bg-green-900', border: 'border-green-700', text: 'text-green-300' },   // AUTONOMOUS
+        3: { bg: 'bg-yellow-900', border: 'border-yellow-700', text: 'text-yellow-300' }, // MANUAL
+        4: { bg: 'bg-red-900', border: 'border-red-700', text: 'text-red-300' },         // EMERGENCY
+        5: { bg: 'bg-red-950', border: 'border-red-800', text: 'text-red-400' },         // ERROR
+        6: { bg: 'bg-black', border: 'border-zinc-800', text: 'text-zinc-500' },         // SHUTDOWN
+    };
+    
+    // Get colors for current state, default to zinc for unknown states
+    const colors = stateColors[stateMsg.state] || { bg: 'bg-zinc-900', border: 'border-zinc-800', text: 'text-zinc-300' };
+    
+    // Apply state-specific badge styling (removes any previous classes including UNKNOWN styling)
+    if (stateBadge) {
+        stateBadge.className = `${colors.bg} border ${colors.border} p-6 mb-3`;
+    }
+    
+    // Update state name with state-specific color (removes any previous classes including UNKNOWN styling)
+    if (stateName) {
+        stateName.textContent = stateNameStr;
+        stateName.className = `text-3xl font-bold ${colors.text} mb-1 tracking-wide`;
+    }
+    
+    // Update info - restore normal styling
+    if (stateDescription) {
+        stateDescription.textContent = stateMsg.description || 'No description';
+        stateDescription.className = 'text-zinc-300';
+    }
+    
+    if (stateValue) {
+        stateValue.textContent = stateMsg.state;
+    }
+    
+    // Format timestamp
+    if (stateTimestamp) {
+        if (stateMsg.timestamp) {
+            const time = new Date(
+                stateMsg.timestamp.sec * 1000 + 
+                stateMsg.timestamp.nanosec / 1000000
+            );
+            stateTimestamp.textContent = time.toLocaleString();
+        } else {
+            stateTimestamp.textContent = new Date().toLocaleString();
+        }
+    }
+    
+    // Clear any connection warning messages when state updates resume
+    const serviceResponse = document.getElementById('serviceResponse');
+    if (serviceResponse && !serviceResponse.classList.contains('hidden')) {
+        serviceResponse.classList.add('hidden');
+    }
+}
+
+/**
+ * Update health display with new health data
+ */
+function updateHealthDisplay(healthMsg) {
+    const healthMessage = document.getElementById('healthMessage');
+    const healthTimestamp = document.getElementById('healthTimestamp');
+    const healthCircle = document.getElementById('healthCircle');
+    
+    // Update health message and restore normal styling
+    healthMessage.textContent = healthMsg.data || 'No health data';
+    healthMessage.className = 'text-xs text-zinc-300 font-mono';
+    
+    // Update timestamp
+    const now = new Date();
+    healthTimestamp.textContent = now.toLocaleTimeString();
+    lastHealthTime = now;
+    isHealthy = true;
+    
+    // Reset health timeout
+    resetHealthTimeout();
+    
+    // Clear any connection warning messages when health resumes
+    const serviceResponse = document.getElementById('serviceResponse');
+    if (serviceResponse && !serviceResponse.classList.contains('hidden')) {
+        serviceResponse.classList.add('hidden');
+    }
+    
+    // Update health indicator (pulse animation)
+    if (healthCircle) {
+        healthCircle.style.stroke = '#4CAF50';
+    }
+    
+    // Simple health status coloring based on keywords
+    const data = healthMsg.data.toLowerCase();
+    if (data.includes('error') || data.includes('critical')) {
+        if (healthCircle) healthCircle.style.stroke = '#e74c3c';
+    } else if (data.includes('warning') || data.includes('degraded')) {
+        if (healthCircle) healthCircle.style.stroke = '#f39c12';
+    } else {
+        if (healthCircle) healthCircle.style.stroke = '#4CAF50';
+    }
+}
+
+/**
+ * Add state change to history
+ */
+function addToHistory(stateMsg) {
+    const historyList = document.getElementById('stateHistory');
+    const stateName = STATE_NAMES[stateMsg.state] || 'UNKNOWN';
+    
+    // Remove placeholder if present
+    const placeholder = historyList.querySelector('.history-placeholder');
+    if (placeholder) {
+        placeholder.remove();
+    }
+    
+    // Create history entry
+    const entry = {
+        state: stateName,
+        description: stateMsg.description,
+        timestamp: new Date()
+    };
+    
+    stateHistory.unshift(entry);
+    
+    // Limit history size
+    if (stateHistory.length > MAX_HISTORY_ITEMS) {
+        stateHistory.pop();
+    }
+    
+    // Update display
+    renderHistory();
+}
+
+/**
+ * Render state history list
+ */
+function renderHistory() {
+    const historyList = document.getElementById('stateHistory');
+    historyList.innerHTML = '';
+    
+    if (stateHistory.length === 0) {
+        historyList.innerHTML = '<li class="p-2 text-xs font-mono text-zinc-600">// NO EVENTS LOGGED</li>';
+        return;
+    }
+    
+    stateHistory.forEach(entry => {
+        const li = document.createElement('li');
+        li.className = 'p-2 hover:bg-zinc-900/50 transition-colors duration-200';
+        li.innerHTML = `
+            <div class="text-xs font-mono text-zinc-400">
+                <span class="text-green-400">${entry.state}</span> ${entry.description}
+            </div>
+            <div class="text-xs font-mono text-zinc-600 mt-0.5">${entry.timestamp.toLocaleString()}</div>
+        `;
+        historyList.appendChild(li);
+    });
+}
+
+/**
+ * Request a state change via ROS service
+ */
+function requestStateChange(targetState, reason) {
+    console.log('requestStateChange called - ros:', !!ros, 'connected:', ros?.isConnected, 'client:', !!stateChangeClient);
+    
+    if (!ros || !ros.isConnected) {
+        showServiceResponse('Not connected to ROS Bridge. Please connect first.', false);
+        return;
+    }
+    
+    if (!stateChangeClient) {
+        showServiceResponse('State change service not initialized. Check console for details.', false);
+        console.error('stateChangeClient is null/undefined. Connection may have failed or service setup incomplete.');
+        return;
+    }
+    
+    console.log('Requesting state change to:', targetState, 'Reason:', reason);
+    
+    // Create service request
+    const request = new ROSLIB.ServiceRequest({
+        requested_state: targetState,
+        reason: reason
+    });
+    
+    // Call service
+    stateChangeClient.callService(request, function(response) {
+        console.log('State change response:', response);
+        
+        if (response.success) {
+            showServiceResponse(
+                `✓ State change successful: ${response.message}`,
+                true
+            );
+        } else {
+            showServiceResponse(
+                `✗ State change failed: ${response.message}`,
+                false
+            );
+        }
+    }, function(error) {
+        console.error('Service call failed:', error);
+        showServiceResponse(
+            `✗ Service call error: ${error}`,
+            false
+        );
+    });
+}
+
+/**
+ * Show service response message
+ */
+function showServiceResponse(message, success) {
+    const responseDiv = document.getElementById('serviceResponse');
+    responseDiv.textContent = message;
+    responseDiv.className = success ? 'success' : 'error';
+    responseDiv.classList.remove('hidden');
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        responseDiv.classList.add('hidden');
+    }, 5000);
+}
+
+/**
+ * Show notification (could be expanded with a toast system)
+ */
+function showNotification(message, type) {
+    console.log(`[${type.toUpperCase()}]`, message);
+    // Could add a toast notification system here
+}
+
+/**
+ * Utility: Format ROS timestamp to readable string
+ */
+function formatROSTime(timestamp) {
+    if (!timestamp) return 'N/A';
+    const date = new Date(
+        timestamp.sec * 1000 + 
+        timestamp.nanosec / 1000000
+    );
+    return date.toLocaleString();
+}
+
+// Export functions to global scope for HTML onclick handlers
+window.requestStateChange = requestStateChange;
+window.reconnect = reconnect;
