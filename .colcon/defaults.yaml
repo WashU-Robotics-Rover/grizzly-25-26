@@ -1,5 +1,7 @@
+# colcon defaults configuration
+# Note: Platform-specific Python paths are handled by grizzly.py build command
+# This file is kept minimal to allow cross-platform builds
+# macOS builds will have Python paths set via --cmake-args in grizzly.py
+# Linux builds will use system Python automatically
 build:
-  cmake-args:
-  - -DPython_EXECUTABLE=/opt/anaconda3/envs/ros_env/bin/python
-  - -DPython_INCLUDE_DIR=/opt/anaconda3/envs/ros_env/include/python3.11
-  - -DPython_LIBRARY=/opt/anaconda3/envs/ros_env/lib/libpython3.11.dylib
+  cmake-args: []

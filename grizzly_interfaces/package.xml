@@ -23,6 +23,7 @@
 
   <!-- Dependencies needed at both build and run time -->
   <!-- These packages provide message types used within our custom messages -->
+  <depend>builtin_interfaces</depend> <!-- Base ROS 2 message types (Time, Duration, etc.) -->
   <depend>std_msgs</depend>       <!-- Standard message types (Header, String, etc.) -->
   <depend>geometry_msgs</depend>  <!-- Geometric primitives (Pose, Twist, etc.) -->
   <depend>nav_msgs</depend>       <!-- Navigation messages (Odometry, Path, etc.) -->
