@@ -21,9 +21,12 @@ find_package(ament_cmake REQUIRED)
 
 # rosidl_default_generators: Tools to generate code from .msg, .srv, .action files
 # This creates C++, Python, and other language bindings for our custom messages
+# IMPORTANT: Find this BEFORE other message dependencies to ensure proper typesupport setup
 find_package(rosidl_default_generators REQUIRED)
 
 # Message type dependencies: packages that define message types we use
+# Order matters: builtin_interfaces should come first as it's a base dependency
+find_package(builtin_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)       # Standard message types (Header, String, etc.)
 find_package(geometry_msgs REQUIRED)  # Geometric types (Pose, Twist, etc.)
 find_package(nav_msgs REQUIRED)       # Navigation types (Odometry, Path, etc.)
@@ -42,8 +45,13 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
 # --- EXPORT CONFIGURATION ---
 
-# Export the runtime dependency so dependent packages know to link against rosidl
+# Export dependencies for packages that depend on this one
+# This ensures proper linking and typesupport resolution across platforms
 ament_export_dependencies(rosidl_default_runtime)
+ament_export_dependencies(std_msgs)
+ament_export_dependencies(geometry_msgs)
+ament_export_dependencies(nav_msgs)
+ament_export_dependencies(builtin_interfaces)
 
 # Finalize the ament package configuration
 ament_package()

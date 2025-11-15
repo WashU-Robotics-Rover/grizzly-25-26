@@ -41,13 +41,8 @@ jobs:
           source /opt/ros/humble/setup.bash
           set -u
 
-          echo "🚧 Building workspace with explicit Python linkage..."
-          colcon build \
-            --cmake-args \
-              -DPython_EXECUTABLE=/opt/anaconda3/envs/ros_env/bin/python \
-              -DPython_INCLUDE_DIR=/opt/anaconda3/envs/ros_env/include/python3.11 \
-              -DPython_LIBRARY=/opt/anaconda3/envs/ros_env/lib/libpython3.11.dylib \
-            --symlink-install
+          echo "🚧 Building workspace..."
+          colcon build --symlink-install
 
       - name: Source install space
         run: |
