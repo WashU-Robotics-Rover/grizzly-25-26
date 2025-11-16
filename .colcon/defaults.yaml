@@ -1,7 +1,16 @@
 # colcon defaults configuration
-# Note: Platform-specific Python paths are handled by grizzly.py build command
-# This file is kept minimal to allow cross-platform builds
-# macOS builds will have Python paths set via --cmake-args in grizzly.py
-# Linux builds will use system Python automatically
+# Note: Platform-specific Python paths are handled automatically by CMakeLists.txt
+# The grizzly_interfaces CMakeLists.txt automatically detects conda environments
+# on macOS and sets Python paths accordingly.
+#
+# IMPORTANT FOR macOS CONDA ENVIRONMENTS:
+# When switching between conda environments (e.g., ros_env vs ros_env_test),
+# you may need to clean the build directory to clear CMake cache:
+#
+#   rm -rf build install log
+#   colcon build
+#
+# The CMakeLists.txt will automatically detect the active conda environment
+# via the CONDA_PREFIX environment variable and use the correct Python paths.
 build:
   cmake-args: []
