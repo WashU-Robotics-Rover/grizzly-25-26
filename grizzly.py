@@ -34,6 +34,31 @@ class GrizzlyCLI:
         self.downloads_dir = self.workspace_root / "downloads"
         self.install_dir = self.workspace_root / "install"
         self.test_dir = self.workspace_root / "grizzly_stack" / "test"
+    
+    def get_conda_env_info(self):
+        """
+        Detect the active conda environment name and prefix.
+        Returns (env_name, env_prefix) tuple or (None, None) if not found.
+        """
+        conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+        conda_prefix = os.environ.get('CONDA_PREFIX')
+        
+        if not conda_env or not conda_prefix:
+            # Try to get conda info if not in environment
+            try:
+                conda_info = subprocess.run(
+                    ['conda', 'info', '--json'],
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                conda_data = json.loads(conda_info.stdout)
+                conda_env = conda_data.get('active_prefix_name') or conda_data.get('default_prefix', '').split('/')[-1]
+                conda_prefix = conda_data.get('active_prefix') or conda_data.get('default_prefix')
+            except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
+                return None, None
+        
+        return conda_env, conda_prefix
         
     def main(self):
         """Main entry point - parse arguments and dispatch to appropriate command."""
@@ -468,13 +493,57 @@ Platform: {system}
             print("\nInstall conda from: https://docs.conda.io/en/latest/miniconda.html")
             return 1
         
+        # Detect active conda environment
+        conda_env, conda_prefix = self.get_conda_env_info()
+        
+        if not conda_env or not conda_prefix:
+            print("❌ Could not detect conda environment.")
+            print("   Please activate your conda environment first:")
+            print("   conda activate ros_env  # or ros_env_test")
+            return 1
+        
+        print(f"📦 Using conda environment: {conda_env}")
+        print(f"   Path: {conda_prefix}\n")
+        
+        # Detect Python version and paths
+        python_exe = shutil.which('python3') or shutil.which('python')
+        if not python_exe:
+            print("❌ Python not found in PATH")
+            return 1
+        
+        # Get Python version
+        try:
+            python_version = subprocess.run(
+                [python_exe, '--version'],
+                capture_output=True,
+                text=True,
+                check=True
+            ).stdout.strip().split()[-1]
+            python_major_minor = '.'.join(python_version.split('.')[:2])
+        except (subprocess.CalledProcessError, IndexError):
+            python_major_minor = '3.11'  # fallback
+            print(f"⚠️  Could not detect Python version, using {python_major_minor} as fallback")
+        
+        # Construct Python paths based on detected environment
+        python_executable = f"{conda_prefix}/bin/python"
+        python_include_dir = f"{conda_prefix}/include/python{python_major_minor}"
+        python_library = f"{conda_prefix}/lib/libpython{python_major_minor}.dylib"
+        
+        # Verify paths exist
+        if not os.path.exists(python_executable):
+            print(f"❌ Python executable not found: {python_executable}")
+            return 1
+        if not os.path.exists(python_include_dir):
+            print(f"⚠️  Python include directory not found: {python_include_dir}")
+            print("   Attempting build anyway...")
+        
         # Build colcon command
         colcon_args = [
             'colcon', 'build',
             '--cmake-args',
-            '-DPython_EXECUTABLE=/opt/anaconda3/envs/ros_env/bin/python',
-            '-DPython_INCLUDE_DIR=/opt/anaconda3/envs/ros_env/include/python3.11',
-            '-DPython_LIBRARY=/opt/anaconda3/envs/ros_env/lib/libpython3.11.dylib'
+            f'-DPython_EXECUTABLE={python_executable}',
+            f'-DPython_INCLUDE_DIR={python_include_dir}',
+            f'-DPython_LIBRARY={python_library}'
         ]
         
         if args and args.symlink_install:
@@ -484,10 +553,11 @@ Platform: {system}
             colcon_args.extend(['--packages-select'] + args.packages_select)
         
         # Build the shell command with conda activation
+        setup_script = f"{conda_prefix}/setup.zsh"
         shell_cmd = f"""
 eval "$(conda shell.zsh hook)"
-conda activate ros_env
-source /opt/anaconda3/envs/ros_env/setup.zsh
+conda activate {conda_env}
+{'source ' + setup_script + ' 2>/dev/null || true'}
 cd {working_dir}
 {' '.join(colcon_args)}
 source install/setup.zsh
@@ -509,9 +579,10 @@ source install/setup.zsh
             print(f"❌ Build failed with exit code {e.returncode}")
             print(f"{'='*70}\n")
             print("This may be due to:")
-            print("  - Conda environment 'ros_env' not found")
+            print(f"  - Conda environment '{conda_env}' not properly configured")
             print("  - ROS 2 not properly installed in conda")
             print("  - Missing dependencies")
+            print("  - Incorrect Python paths")
             return 1
     
     def build_linux(self, working_dir, args=None):
@@ -897,10 +968,17 @@ source install/setup.zsh
             
             # Build command to launch rosbridge with workspace sourced
             if self.system == "Darwin":
+                conda_env, conda_prefix = self.get_conda_env_info()
+                if not conda_env or not conda_prefix:
+                    print("❌ Could not detect conda environment for rosbridge.")
+                    print("   Please activate your conda environment first:")
+                    print("   conda activate ros_env  # or ros_env_test")
+                    return 1
+                setup_script = f"{conda_prefix}/setup.zsh"
                 rosbridge_cmd = f"""
 eval "$(conda shell.zsh hook)"
-conda activate ros_env
-source /opt/anaconda3/envs/ros_env/setup.zsh
+conda activate {conda_env}
+source {setup_script} 2>/dev/null || true
 source {self.workspace_root}/install/setup.zsh
 ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridge_port}
 """
@@ -1048,10 +1126,20 @@ ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridg
         """Run on macOS using conda environment."""
         print("🍎 Launching on macOS (conda environment)...\n")
         
-        launch_cmd = """
+        # Detect active conda environment
+        conda_env, conda_prefix = self.get_conda_env_info()
+        
+        if not conda_env or not conda_prefix:
+            print("❌ Could not detect conda environment.")
+            print("   Please activate your conda environment first:")
+            print("   conda activate ros_env  # or ros_env_test")
+            return 1
+        
+        setup_script = f"{conda_prefix}/setup.zsh"
+        launch_cmd = f"""
 eval "$(conda shell.zsh hook)"
-conda activate ros_env
-source /opt/anaconda3/envs/ros_env/setup.zsh
+conda activate {conda_env}
+source {setup_script} 2>/dev/null || true
 
 # Source workspace - fail if not found
 if [ ! -f "install/setup.zsh" ]; then
@@ -1228,10 +1316,17 @@ ros2 launch grizzly_stack grizzly_minimal.launch.py
         
         # Add workspace to environment
         if self.system == "Darwin":
-            source_cmd = """
+            conda_env, conda_prefix = self.get_conda_env_info()
+            if not conda_env or not conda_prefix:
+                print("❌ Could not detect conda environment for tests.")
+                print("   Please activate your conda environment first:")
+                print("   conda activate ros_env  # or ros_env_test")
+                return 1
+            setup_script = f"{conda_prefix}/setup.zsh"
+            source_cmd = f"""
 eval "$(conda shell.zsh hook)"
-conda activate ros_env
-source /opt/anaconda3/envs/ros_env/setup.zsh
+conda activate {conda_env}
+source {setup_script} 2>/dev/null || true
 source install/setup.zsh
 env
 """

@@ -14,6 +14,50 @@ cmake_minimum_required(VERSION 3.8)
 # Define the project name (must match package.xml)
 project(grizzly_interfaces)
 
+# --- AUTO-DETECT CONDA ENVIRONMENT (macOS) ---
+# Automatically detect and use conda Python paths when CONDA_PREFIX is set
+# This prevents build failures when switching between conda environments
+# Note: Set these BEFORE find_package(Python) to override any cached values
+if(APPLE AND DEFINED ENV{CONDA_PREFIX})
+  set(CONDA_PREFIX $ENV{CONDA_PREFIX})
+  
+  # Find Python executable in conda environment
+  find_program(CONDA_PYTHON_EXECUTABLE
+    NAMES python3 python
+    PATHS ${CONDA_PREFIX}/bin
+    NO_DEFAULT_PATH
+  )
+  
+  if(CONDA_PYTHON_EXECUTABLE)
+    # Get Python version
+    execute_process(
+      COMMAND ${CONDA_PYTHON_EXECUTABLE} --version
+      OUTPUT_VARIABLE PYTHON_VERSION_OUTPUT
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    string(REGEX REPLACE "Python ([0-9]+\\.[0-9]+).*" "\\1" PYTHON_VERSION ${PYTHON_VERSION_OUTPUT})
+    
+    # Set Python paths explicitly (FORCE to override cached values)
+    set(Python_EXECUTABLE ${CONDA_PREFIX}/bin/python CACHE FILEPATH "Python executable" FORCE)
+    set(Python3_EXECUTABLE ${CONDA_PREFIX}/bin/python3 CACHE FILEPATH "Python3 executable" FORCE)
+    set(Python_INCLUDE_DIR ${CONDA_PREFIX}/include/python${PYTHON_VERSION} CACHE PATH "Python include directory" FORCE)
+    set(Python_LIBRARY ${CONDA_PREFIX}/lib/libpython${PYTHON_VERSION}.dylib CACHE FILEPATH "Python library" FORCE)
+    
+    # Verify paths exist
+    if(EXISTS ${Python_EXECUTABLE} AND EXISTS ${Python_INCLUDE_DIR} AND EXISTS ${Python_LIBRARY})
+      message(STATUS "Using conda Python: ${Python_EXECUTABLE}")
+      message(STATUS "  Include: ${Python_INCLUDE_DIR}")
+      message(STATUS "  Library: ${Python_LIBRARY}")
+    else()
+      # Reset if paths don't exist
+      unset(Python_EXECUTABLE CACHE)
+      unset(Python3_EXECUTABLE CACHE)
+      unset(Python_INCLUDE_DIR CACHE)
+      unset(Python_LIBRARY CACHE)
+    endif()
+  endif()
+endif()
+
 # --- FIND REQUIRED PACKAGES ---
 
 # ament_cmake: The build system for ROS 2 CMake packages
