@@ -1,18 +1,29 @@
 """
-Core Subsystem for Grizzly Stack
+Core module for Grizzly Robotics Stack.
 
-This module contains core system management nodes that monitor and coordinate
-the overall rover system health and status.
+To create a new node:
 
-Nodes:
-- system_manager: Monitors system health and publishes periodic status updates
-- lifecycle_manager: Manages startup and lifecycle transitions of all nodes
-- layer_manager: Manages lifecycle of nodes organized by layers
+    from grizzly_stack.core import GrizzlyLifecycleNode, run_node
 
-The core subsystem runs continuously and provides essential telemetry for
-debugging and monitoring the rover's operational state.
+    class MyNode(GrizzlyLifecycleNode):
+        def __init__(self):
+            super().__init__('my_node')
+        
+        def tick(self):
+            pass
+
+    def main():
+        run_node(MyNode)
 """
 
+from .base_node import GrizzlyLifecycleNode, run_node
 from .layer_manager import LayerManager
+from .utils import get_state_name, load_layers_config
 
-__all__ = ['LayerManager']
+__all__ = [
+    'GrizzlyLifecycleNode',
+    'run_node',
+    'LayerManager',
+    'get_state_name',
+    'load_layers_config',
+]

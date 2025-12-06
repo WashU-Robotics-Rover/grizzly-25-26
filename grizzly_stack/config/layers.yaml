@@ -1,55 +1,51 @@
-# Layer Configuration for Grizzly Robotics Stack
+# Node Configuration
 #
-# This configuration file defines the layer structure for node organization.
-# Layers group related nodes together, allowing the system to manage them
-# as units rather than individually. This prevents the system manager and
-# lifecycle manager from becoming bloated as more nodes are added.
+# This is the ONLY file you need to edit to add/remove nodes.
+# The launch file reads this and starts all enabled nodes automatically.
+#
+# To add a new node:
+#   1. Create your node file (inherit from GrizzlyLifecycleNode)
+#   2. Add to setup.py entry_points
+#   3. Add it below with enabled: true
+#   4. Rebuild: ./grizzly.py build
 #
 # Format:
-#   layers:
-#     layer_name:
-#       nodes:
-#         - node_name_1
-#         - node_name_2
-#       startup_order: 1  # Optional: order for startup sequence
-#
-# Usage:
-#   - Add new nodes to existing layers by adding them to the nodes list
-#   - Create new layers by adding new entries under layers
-#   - The startup_order determines the order layers are configured during startup
-#   - Lower numbers are configured first
+#   node_name:
+#     enabled: true/false
+#     layer: perception/planning/control
+#     params:  # optional, passed to node
+#       key: value
 
-layers:
-  perception:
-    nodes:
-      - perception_node
-    startup_order: 1
-    description: "Perception and sensor processing layer"
-  
-  planning:
-    nodes:
-      - planner_node
-    startup_order: 2
-    description: "Path and behavior planning layer"
-  
-  control:
-    nodes:
-      - control_node
-    startup_order: 3
-    description: "Motor and actuator control layer"
-  
-  # Example: Future layers can be added here
-  # navigation:
-  #   nodes:
-  #     - navigation_node
-  #     - localization_node
-  #   startup_order: 2
-  #   description: "Navigation and localization layer"
-  #
-  # teleoperation:
-  #   nodes:
-  #     - teleop_node
-  #     - joystick_node
-  #   startup_order: 4
-  #   description: "Teleoperation and manual control layer"
+nodes:
+  # === PERCEPTION ===
+  camera_node:
+    enabled: true
+    layer: perception
+    params:
+      rate_hz: 2.0
+      camera_id: 0
+      detection_threshold: 0.5
 
+  # === PLANNING ===
+  path_planner:
+    enabled: true
+    layer: planning
+    params:
+      rate_hz: 1.0
+      max_speed: 1.0
+      goal_tolerance: 0.5
+
+  # === CONTROL ===
+  motor_controller:
+    enabled: true
+    layer: control
+    params:
+      rate_hz: 10.0
+      max_linear_speed: 1.0
+      max_angular_speed: 0.5
+
+# Layer startup order (lower = starts first)
+layer_order:
+  perception: 1
+  planning: 2
+  control: 3
