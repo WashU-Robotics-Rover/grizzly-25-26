@@ -9,14 +9,16 @@ This architecture prevents the system manager from becoming bloated as more node
 are added to the system.
 """
 
-import rclpy
 from rclpy.node import Node
-from lifecycle_msgs.srv import ChangeState as LifecycleChangeState, GetState
+from lifecycle_msgs.srv import ChangeState as LifecycleChangeState
 from lifecycle_msgs.msg import Transition
 from grizzly_interfaces.msg import OperationalState
-import yaml
-from ament_index_python.packages import get_package_share_directory
-import os
+
+from .utils import (
+    get_state_name,
+    load_layers_config,
+    DEFAULT_STATE_LAYER_MAPPING,
+)
 
 
 class LayerManager:
@@ -39,18 +41,10 @@ class LayerManager:
         self._logger = node.get_logger()
         
         # Load layer configuration from YAML file
-        self._layers = self._load_layers_from_config()
+        self._layers, _ = load_layers_config(self._logger)
         
         # Define which layers should be active for each operational state
-        self._state_layer_mapping = {
-            OperationalState.STARTUP: [],  # No layers active during startup
-            OperationalState.STANDBY: [],  # Only core systems in standby
-            OperationalState.AUTONOMOUS: ['perception', 'planning', 'control'],
-            OperationalState.MANUAL: ['perception', 'planning', 'control'],
-            OperationalState.EMERGENCY: [],  # Deactivate all operational layers
-            OperationalState.ERROR: [],  # Deactivate all operational layers
-            OperationalState.SHUTDOWN: [],  # All layers deactivated during shutdown
-        }
+        self._state_layer_mapping = DEFAULT_STATE_LAYER_MAPPING.copy()
         
         # Track lifecycle clients for each node
         self._lifecycle_clients = {}
@@ -58,54 +52,6 @@ class LayerManager:
         self._node_states = {}
         # Track all managed nodes
         self._managed_nodes = []
-    
-    def _load_layers_from_config(self):
-        """
-        Load layer configuration from layers.yaml config file.
-        
-        Returns:
-            dict: Dictionary mapping layer names to lists of node names
-        """
-        try:
-            package_share = get_package_share_directory('grizzly_stack')
-            layers_config_path = os.path.join(package_share, 'config', 'layers.yaml')
-            
-            with open(layers_config_path, 'r') as f:
-                config = yaml.safe_load(f)
-            
-            layers = {}
-            if config and 'layers' in config:
-                for layer_name, layer_config in config['layers'].items():
-                    if 'nodes' in layer_config:
-                        layers[layer_name] = layer_config['nodes']
-                        self._logger.debug(
-                            f'Loaded layer {layer_name} with nodes: {layer_config["nodes"]}'
-                        )
-            
-            if not layers:
-                self._logger.warn(
-                    'No layers found in config file, using default layers'
-                )
-                # Fallback to default if config is empty
-                return {
-                    'perception': ['perception_node'],
-                    'planning': ['planner_node'],
-                    'control': ['control_node'],
-                }
-            
-            self._logger.info(f'Loaded {len(layers)} layers from configuration')
-            return layers
-            
-        except Exception as e:
-            self._logger.error(
-                f'Failed to load layers from config: {e}. Using default layers.'
-            )
-            # Fallback to default configuration
-            return {
-                'perception': ['perception_node'],
-                'planning': ['planner_node'],
-                'control': ['control_node'],
-            }
     
     def initialize_node_states(self, node_states: dict):
         """
@@ -132,36 +78,30 @@ class LayerManager:
             old_state: Previous operational state
             new_state: New operational state
         """
-        old_state_name = self._state_name(old_state)
-        new_state_name = self._state_name(new_state)
+        old_state_name = get_state_name(old_state)
+        new_state_name = get_state_name(new_state)
         
         self._logger.info(
             f'Layer Manager: Handling state transition {old_state_name} -> {new_state_name}'
         )
         
-        # Special handling for emergency and shutdown states - deactivate everything immediately
-        # These states override normal layer management
+        # Special handling for emergency and shutdown states
         if new_state == OperationalState.EMERGENCY:
             self._logger.error('EMERGENCY: Deactivating all operational layers immediately')
             self._deactivate_all_layers()
-            return  # Skip normal layer management logic
+            return
         
-        elif new_state == OperationalState.SHUTDOWN:
+        if new_state == OperationalState.SHUTDOWN:
             self._logger.info('SHUTDOWN: Deactivating all layers')
             self._deactivate_all_layers()
-            return  # Skip normal layer management logic
+            return
         
         # Normal layer management based on state mappings
-        # Get layers that should be active for the new state
         required_layers = self._state_layer_mapping.get(new_state, [])
-        
-        # Get layers that were active for the old state
         previous_layers = self._state_layer_mapping.get(old_state, [])
         
-        # Determine which layers need to be activated
+        # Determine which layers need to be activated/deactivated
         layers_to_activate = set(required_layers) - set(previous_layers)
-        
-        # Determine which layers need to be deactivated
         layers_to_deactivate = set(previous_layers) - set(required_layers)
         
         # Activate required layers
@@ -175,39 +115,22 @@ class LayerManager:
             self._deactivate_layer(layer_name)
     
     def _activate_layer(self, layer_name: str):
-        """
-        Activate all nodes in a layer.
-        
-        Args:
-            layer_name: Name of the layer to activate
-        """
+        """Activate all nodes in a layer."""
         if layer_name not in self._layers:
             self._logger.warn(f'Unknown layer: {layer_name}')
             return
         
-        nodes = self._layers[layer_name]
-        for node_name in nodes:
+        for node_name in self._layers[layer_name]:
             self._activate_node(node_name)
     
     def _deactivate_layer(self, layer_name: str):
-        """
-        Deactivate all nodes in a layer.
-        
-        Args:
-            layer_name: Name of the layer to deactivate
-        """
+        """Deactivate all nodes in a layer."""
         if layer_name not in self._layers:
             self._logger.warn(f'Unknown layer: {layer_name}')
             return
         
-        nodes = self._layers[layer_name]
-        for node_name in nodes:
+        for node_name in self._layers[layer_name]:
             self._deactivate_node(node_name)
-    
-    def _activate_all_layers(self):
-        """Activate all layers (for special cases)."""
-        for layer_name in self._layers.keys():
-            self._activate_layer(layer_name)
     
     def _deactivate_all_layers(self):
         """Deactivate all layers (for emergency/shutdown)."""
@@ -215,15 +138,7 @@ class LayerManager:
             self._deactivate_layer(layer_name)
     
     def _get_lifecycle_client(self, node_name: str):
-        """
-        Get or create a lifecycle change state client for a managed node.
-        
-        Args:
-            node_name: Name of the lifecycle node to manage
-            
-        Returns:
-            Client object for lifecycle state transitions
-        """
+        """Get or create a lifecycle change state client for a managed node."""
         if node_name not in self._lifecycle_clients:
             service_name = f'/{node_name}/change_state'
             self._lifecycle_clients[node_name] = self._node.create_client(
@@ -238,30 +153,17 @@ class LayerManager:
         """
         Activate a lifecycle node (Inactive -> Active).
         
-        This method makes an async call without blocking. The result is handled
-        via callback to avoid deadlock issues.
-        
-        Args:
-            node_name: Name of the lifecycle node to activate
-            timeout_sec: Timeout for service availability check
+        Uses async calls to avoid deadlock issues.
         """
-        # Use cached state if available
         cached_state = self._node_states.get(node_name, 'inactive')
         
-        # If cached state shows already active, skip
         if cached_state == 'active':
-            self._logger.info(
-                f'Skipping activation of {node_name} - already active'
-            )
+            self._logger.info(f'Skipping activation of {node_name} - already active')
             return
         
-        # If node is unconfigured, configure it first
         if cached_state == 'unconfigured':
-            self._logger.info(
-                f'{node_name} is in unconfigured state - configuring first'
-            )
+            self._logger.info(f'{node_name} is unconfigured - configuring first')
             self._configure_node(node_name, timeout_sec)
-            # Note: The configure callback will trigger activation
             return
         
         client = self._get_lifecycle_client(node_name)
@@ -277,7 +179,6 @@ class LayerManager:
         
         self._logger.info(f'Requesting activation of {node_name}...')
         
-        # Make async call with callback
         future = client.call_async(request)
         future.add_done_callback(
             lambda f: self._handle_activate_response(f, node_name)
@@ -298,16 +199,7 @@ class LayerManager:
             self._logger.error(f'Exception while activating {node_name}: {e}')
     
     def _configure_node(self, node_name: str, timeout_sec: float = 2.0):
-        """
-        Configure a lifecycle node (Unconfigured -> Inactive).
-        
-        This method makes an async call without blocking. After successful configuration,
-        it will automatically trigger activation if that was the original intent.
-        
-        Args:
-            node_name: Name of the lifecycle node to configure
-            timeout_sec: Timeout for service availability check
-        """
+        """Configure a lifecycle node (Unconfigured -> Inactive)."""
         client = self._get_lifecycle_client(node_name)
         
         if not client.wait_for_service(timeout_sec=timeout_sec):
@@ -321,7 +213,6 @@ class LayerManager:
         
         self._logger.info(f'Requesting configuration of {node_name}...')
         
-        # Make async call with callback
         future = client.call_async(request)
         future.add_done_callback(
             lambda f: self._handle_configure_response(f, node_name)
@@ -334,7 +225,7 @@ class LayerManager:
             if response and response.success:
                 self._logger.info(f'✅ Successfully configured {node_name}')
                 self._node_states[node_name] = 'inactive'
-                # Now activate the node since configuration was triggered by activation request
+                # Now activate the node
                 self._logger.info(f'Now activating {node_name}...')
                 self._activate_node(node_name)
             else:
@@ -343,22 +234,12 @@ class LayerManager:
             self._logger.error(f'Exception while configuring {node_name}: {e}')
     
     def _deactivate_node(self, node_name: str, timeout_sec: float = 2.0):
-        """
-        Deactivate a lifecycle node (Active -> Inactive).
-        
-        This method makes an async call without blocking. We use cached state
-        instead of querying to avoid deadlock when called from callback context.
-        
-        Args:
-            node_name: Name of the lifecycle node to deactivate
-            timeout_sec: Timeout for service availability check
-        """
-        # Use cached state to avoid deadlock
+        """Deactivate a lifecycle node (Active -> Inactive)."""
         cached_state = self._node_states.get(node_name, 'inactive')
         
         if cached_state != 'active':
             self._logger.info(
-                f'Skipping deactivation of {node_name} - cached state is {cached_state} (not active)'
+                f'Skipping deactivation of {node_name} - state is {cached_state}'
             )
             return
         
@@ -375,7 +256,6 @@ class LayerManager:
         
         self._logger.info(f'Requesting deactivation of {node_name}...')
         
-        # Make async call with callback
         future = client.call_async(request)
         future.add_done_callback(
             lambda f: self._handle_deactivate_response(f, node_name)
@@ -393,54 +273,18 @@ class LayerManager:
         except Exception as e:
             self._logger.error(f'Exception while deactivating {node_name}: {e}')
     
-    def _state_name(self, state: int) -> str:
-        """
-        Get human-readable name for a state constant.
-        
-        Args:
-            state: State constant value
-            
-        Returns:
-            str: Human-readable state name
-        """
-        state_names = {
-            OperationalState.STARTUP: 'STARTUP',
-            OperationalState.STANDBY: 'STANDBY',
-            OperationalState.AUTONOMOUS: 'AUTONOMOUS',
-            OperationalState.MANUAL: 'MANUAL',
-            OperationalState.EMERGENCY: 'EMERGENCY',
-            OperationalState.ERROR: 'ERROR',
-            OperationalState.SHUTDOWN: 'SHUTDOWN'
-        }
-        return state_names.get(state, f'UNKNOWN({state})')
+    # =========================================================================
+    # Public API
+    # =========================================================================
     
     def get_managed_nodes(self) -> list:
-        """
-        Get list of all managed nodes.
-        
-        Returns:
-            list: List of node names being managed
-        """
+        """Get list of all managed nodes."""
         return self._managed_nodes.copy()
     
     def get_layer_nodes(self, layer_name: str) -> list:
-        """
-        Get list of nodes in a specific layer.
-        
-        Args:
-            layer_name: Name of the layer
-            
-        Returns:
-            list: List of node names in the layer
-        """
+        """Get list of nodes in a specific layer."""
         return self._layers.get(layer_name, []).copy()
     
     def get_all_layers(self) -> list:
-        """
-        Get list of all layer names.
-        
-        Returns:
-            list: List of all layer names
-        """
+        """Get list of all layer names."""
         return list(self._layers.keys())
-

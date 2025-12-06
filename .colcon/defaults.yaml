@@ -12,5 +12,15 @@
 #
 # The CMakeLists.txt will automatically detect the active conda environment
 # via the CONDA_PREFIX environment variable and use the correct Python paths.
+#
+# TROUBLESHOOTING ROSIDL TYPESUPPORT ISSUES:
+# If you encounter typesupport errors (e.g., "No typesupport found"), try:
+#   1. Clean build: ./grizzly.py build --clean
+#   2. Verify conda env is active: conda activate ros_env
+#   3. Source workspace after build: source install/setup.zsh (macOS) or setup.bash (Linux)
+#   4. Check Python paths match: python3 -c "import sys; print(sys.executable)"
 build:
-  cmake-args: []
+  cmake-args:
+    # Suppress developer warnings from robostack/ROS 2 toolchain
+    # (e.g., FindPythonInterp deprecation warnings)
+    - "-Wno-dev"

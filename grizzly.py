@@ -23,6 +23,7 @@ import tarfile
 import shutil
 import stat
 from pathlib import Path
+from datetime import datetime
 
 
 class GrizzlyCLI:
@@ -31,9 +32,195 @@ class GrizzlyCLI:
     def __init__(self):
         self.workspace_root = Path(__file__).parent.resolve()
         self.system = platform.system()
+        self.is_windows = self.system == "Windows"
+        self.is_macos = self.system == "Darwin"
+        self.is_linux = self.system == "Linux"
         self.downloads_dir = self.workspace_root / "downloads"
         self.install_dir = self.workspace_root / "install"
         self.test_dir = self.workspace_root / "grizzly_stack" / "test"
+    
+    # ========================================================================
+    # CROSS-PLATFORM UTILITIES
+    # ========================================================================
+    
+    def find_ros2_setup_script(self):
+        """
+        Find ROS 2 setup script across platforms.
+        Returns Path to setup script or None if not found.
+        """
+        # Check environment variable first (most reliable)
+        ros_distro = os.environ.get('ROS_DISTRO', 'humble')
+        
+        # Standard locations
+        if self.is_linux:
+            # Linux: /opt/ros/<distro>/setup.bash
+            candidates = [
+                Path(f"/opt/ros/{ros_distro}/setup.bash"),
+                Path("/opt/ros/humble/setup.bash"),  # fallback
+            ]
+        elif self.is_macos:
+            # macOS: Check conda environment
+            conda_env, conda_prefix = self.get_conda_env_info()
+            if conda_prefix:
+                candidates = [
+                    Path(conda_prefix) / "setup.zsh",
+                    Path(conda_prefix) / "setup.bash",
+                ]
+            else:
+                candidates = []
+        elif self.is_windows:
+            # Windows: Check common installation paths
+            ros_base = os.environ.get('ROS_DISTRO', 'humble')
+            candidates = [
+                Path(os.environ.get('ROS_HOME', Path.home() / '.ros')) / f"{ros_base}/setup.bat",
+                Path("C:/opt/ros") / f"{ros_distro}/setup.bat",
+                Path("C:/opt/ros/humble/setup.bat"),  # fallback
+            ]
+        else:
+            candidates = []
+        
+        # Check environment variable for custom ROS installation
+        ros_home = os.environ.get('ROS_HOME')
+        if ros_home:
+            candidates.insert(0, Path(ros_home) / f"{ros_distro}/setup.bash")
+            if self.is_windows:
+                candidates.insert(0, Path(ros_home) / f"{ros_distro}/setup.bat")
+        
+        # Try each candidate
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        
+        return None
+    
+    def get_shell_executable(self):
+        """
+        Get the appropriate shell executable for the current platform.
+        Returns (executable_path, shell_name) tuple.
+        """
+        if self.is_windows:
+            # Windows: Use cmd.exe or PowerShell
+            # Prefer cmd.exe for compatibility with ROS 2 batch files
+            return os.environ.get('COMSPEC', 'cmd.exe'), 'cmd'
+        elif self.is_macos:
+            # macOS: Try zsh first (default on modern macOS), fallback to bash
+            for shell in ['/bin/zsh', '/bin/bash']:
+                if Path(shell).exists():
+                    return shell, Path(shell).name
+            return '/bin/sh', 'sh'
+        else:
+            # Linux: Prefer bash
+            for shell in ['/bin/bash', '/bin/sh']:
+                if Path(shell).exists():
+                    return shell, Path(shell).name
+            return '/bin/sh', 'sh'
+    
+    def get_setup_script_extension(self):
+        """Get the appropriate setup script extension for the platform."""
+        if self.is_windows:
+            return '.bat'
+        elif self.is_macos:
+            return '.zsh'
+        else:
+            return '.bash'
+    
+    def build_source_command(self, commands, working_dir=None):
+        """
+        Build a cross-platform command to source ROS 2 and workspace setup.
+        
+        Args:
+            commands: List of commands to execute after sourcing
+            working_dir: Working directory for execution
+        
+        Returns:
+            (command_string, shell_executable) tuple
+        """
+        shell_exe, shell_name = self.get_shell_executable()
+        ros_setup = self.find_ros2_setup_script()
+        
+        if self.is_windows:
+            # Windows batch file syntax
+            cmd_parts = []
+            if ros_setup and ros_setup.exists():
+                cmd_parts.append(f'call "{ros_setup}"')
+            
+            # Add workspace setup if it exists
+            setup_ext = self.get_setup_script_extension()
+            workspace_setup = self.install_dir / f"setup{setup_ext}"
+            if workspace_setup.exists():
+                cmd_parts.append(f'call "{workspace_setup}"')
+            
+            # Add user commands
+            cmd_parts.extend(commands)
+            
+            return ' && '.join(cmd_parts), shell_exe
+        
+        elif self.is_macos:
+            # macOS: Use zsh with conda activation
+            conda_env, conda_prefix = self.get_conda_env_info()
+            cmd_parts = []
+            
+            if conda_env and conda_prefix:
+                cmd_parts.append(f'eval "$(conda shell.zsh hook)"')
+                cmd_parts.append(f'conda activate {conda_env}')
+                if ros_setup and ros_setup.exists():
+                    cmd_parts.append(f'source "{ros_setup}" 2>/dev/null || true')
+            elif ros_setup and ros_setup.exists():
+                cmd_parts.append(f'source "{ros_setup}"')
+            
+            # Add workspace setup
+            setup_ext = self.get_setup_script_extension()
+            workspace_setup = self.install_dir / f"setup{setup_ext}"
+            if workspace_setup.exists():
+                cmd_parts.append(f'source "{workspace_setup}"')
+            
+            # Add user commands
+            cmd_parts.extend(commands)
+            
+            return '\n'.join(cmd_parts), shell_exe
+        
+        else:
+            # Linux: Use bash
+            cmd_parts = ['set -euo pipefail']
+            
+            if ros_setup and ros_setup.exists():
+                cmd_parts.append(f'source "{ros_setup}"')
+            
+            # Add workspace setup
+            setup_ext = self.get_setup_script_extension()
+            workspace_setup = self.install_dir / f"setup{setup_ext}"
+            if workspace_setup.exists():
+                cmd_parts.append(f'source "{workspace_setup}"')
+            
+            # Add user commands
+            cmd_parts.extend(commands)
+            
+            return ' && '.join(cmd_parts), shell_exe
+    
+    def run_sourced_command(self, commands, working_dir=None, check=True):
+        """
+        Run commands with ROS 2 and workspace properly sourced.
+        
+        Args:
+            commands: List of command strings to execute
+            working_dir: Working directory (defaults to workspace_root)
+            check: Whether to raise on non-zero exit code
+        
+        Returns:
+            subprocess.CompletedProcess result
+        """
+        if working_dir is None:
+            working_dir = self.workspace_root
+        
+        cmd_str, shell_exe = self.build_source_command(commands, working_dir)
+        
+        return subprocess.run(
+            cmd_str,
+            shell=True,
+            executable=shell_exe,
+            cwd=str(working_dir),
+            check=check
+        )
     
     def get_conda_env_info(self):
         """
@@ -294,11 +481,7 @@ Platform: {system}
                 json.dump({
                     "version": tag,
                     "name": name,
-                    "installed_at": subprocess.run(
-                        ["date", "+%Y-%m-%d %H:%M:%S"],
-                        capture_output=True,
-                        text=True
-                    ).stdout.strip()
+                    "installed_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }, f, indent=2)
             print(f"✅ Version saved: {tag}")
             
@@ -441,10 +624,12 @@ Platform: {system}
     
     def build_workspace(self, working_dir):
         """Build the workspace using platform-specific methods."""
-        if self.system == "Darwin":
+        if self.is_macos:
             return self.build_macos(working_dir)
-        elif self.system == "Linux":
+        elif self.is_linux:
             return self.build_linux(working_dir)
+        elif self.is_windows:
+            return self.build_windows(working_dir)
         else:
             print(f"❌ Unsupported platform: {self.system}")
             return 1
@@ -473,11 +658,11 @@ Platform: {system}
             print("✅ Clean complete\n")
         
         # Build based on platform
-        if self.system == "Darwin":
+        if self.is_macos:
             return self.build_macos(self.workspace_root, args)
-        elif self.system == "Linux":
+        elif self.is_linux:
             return self.build_linux(self.workspace_root, args)
-        elif self.system == "Windows":
+        elif self.is_windows:
             return self.build_windows(self.workspace_root, args)
         else:
             print(f"❌ Unsupported platform: {self.system}")
@@ -525,49 +710,59 @@ Platform: {system}
             print(f"⚠️  Could not detect Python version, using {python_major_minor} as fallback")
         
         # Construct Python paths based on detected environment
-        python_executable = f"{conda_prefix}/bin/python"
-        python_include_dir = f"{conda_prefix}/include/python{python_major_minor}"
-        python_library = f"{conda_prefix}/lib/libpython{python_major_minor}.dylib"
+        python_executable = Path(conda_prefix) / "bin" / "python"
+        python_include_dir = Path(conda_prefix) / "include" / f"python{python_major_minor}"
+        python_library = Path(conda_prefix) / "lib" / f"libpython{python_major_minor}.dylib"
         
         # Verify paths exist
-        if not os.path.exists(python_executable):
+        if not python_executable.exists():
             print(f"❌ Python executable not found: {python_executable}")
             return 1
-        if not os.path.exists(python_include_dir):
+        if not python_include_dir.exists():
             print(f"⚠️  Python include directory not found: {python_include_dir}")
             print("   Attempting build anyway...")
         
         # Build colcon command
-        colcon_args = [
+        build_type = "Release" if (args and args.release) else "RelWithDebInfo"
+        colcon_cmd = [
             'colcon', 'build',
             '--cmake-args',
+            '-Wno-dev',  # Suppress developer warnings from robostack toolchain
+            f'-DCMAKE_BUILD_TYPE={build_type}',
             f'-DPython_EXECUTABLE={python_executable}',
             f'-DPython_INCLUDE_DIR={python_include_dir}',
             f'-DPython_LIBRARY={python_library}'
         ]
         
         if args and args.symlink_install:
-            colcon_args.append('--symlink-install')
+            colcon_cmd.append('--symlink-install')
         
         if args and args.packages_select:
-            colcon_args.extend(['--packages-select'] + args.packages_select)
+            colcon_cmd.extend(['--packages-select'] + args.packages_select)
         
         # Build the shell command with conda activation
-        setup_script = f"{conda_prefix}/setup.zsh"
-        shell_cmd = f"""
-eval "$(conda shell.zsh hook)"
-conda activate {conda_env}
-{'source ' + setup_script + ' 2>/dev/null || true'}
-cd {working_dir}
-{' '.join(colcon_args)}
-source install/setup.zsh
-"""
+        shell_exe, _ = self.get_shell_executable()
+        ros_setup = self.find_ros2_setup_script()
+        
+        shell_cmd_parts = [
+            f'eval "$(conda shell.zsh hook)"',
+            f'conda activate {conda_env}',
+        ]
+        
+        if ros_setup and ros_setup.exists():
+            shell_cmd_parts.append(f'source "{ros_setup}" 2>/dev/null || true')
+        
+        shell_cmd_parts.append(f'cd "{working_dir}"')
+        shell_cmd_parts.append(' '.join(f'"{arg}"' if ' ' in arg else arg for arg in colcon_cmd))
+        
+        shell_cmd = '\n'.join(shell_cmd_parts)
         
         try:
             result = subprocess.run(
                 shell_cmd,
                 shell=True,
-                executable='/bin/zsh',
+                executable=shell_exe,
+                cwd=str(working_dir),
                 check=True
             )
             print(f"\n{'='*70}")
@@ -596,29 +791,37 @@ source install/setup.zsh
             return 1
         
         # Check for ROS 2
-        ros_setup = Path("/opt/ros/humble/setup.bash")
-        if not ros_setup.exists():
-            print(f"❌ ROS 2 Humble not found at {ros_setup}")
-            print("Install from: https://docs.ros.org/en/humble/Installation.html")
+        ros_setup = self.find_ros2_setup_script()
+        if not ros_setup or not ros_setup.exists():
+            print(f"❌ ROS 2 setup script not found.")
+            print("   Expected locations:")
+            print("     - /opt/ros/humble/setup.bash")
+            print("     - $ROS_HOME/humble/setup.bash")
+            print("\nInstall from: https://docs.ros.org/en/humble/Installation.html")
             return 1
+        
+        print(f"📦 Using ROS 2 setup: {ros_setup}\n")
         
         # Build type
         build_type = "Release" if (args and args.release) else "RelWithDebInfo"
         
         # Build colcon command
-        colcon_cmd = f'colcon build --cmake-args -DCMAKE_BUILD_TYPE={build_type}'
+        colcon_cmd = [
+            'colcon', 'build',
+            '--cmake-args',
+            '-Wno-dev',  # Suppress developer warnings from ROS 2 toolchain
+            f'-DCMAKE_BUILD_TYPE={build_type}'
+        ]
         
         if args and args.symlink_install:
-            colcon_cmd += ' --symlink-install'
+            colcon_cmd.append('--symlink-install')
         
         if args and args.packages_select:
-            colcon_cmd += ' --packages-select ' + ' '.join(args.packages_select)
+            colcon_cmd.extend(['--packages-select'] + args.packages_select)
         
         # Build shell script
-        commands = [
-            "set -euo pipefail",
-            f"source {ros_setup}",
-        ]
+        shell_exe, _ = self.get_shell_executable()
+        commands = []
         
         # Run rosdep if not skipped
         if not (args and args.no_rosdep) and shutil.which('rosdep'):
@@ -631,23 +834,25 @@ source install/setup.zsh
             ])
         
         commands.append(f'echo "Building with {build_type}..."')
-        commands.append(colcon_cmd)
+        commands.append(' '.join(f'"{arg}"' if ' ' in arg else arg for arg in colcon_cmd))
         
-        script = " && ".join(commands)
+        # Build source command
+        cmd_str, _ = self.build_source_command(commands, working_dir)
         
         try:
             subprocess.run(
-                script,
+                cmd_str,
                 shell=True,
-                executable='/bin/bash',
+                executable=shell_exe,
                 check=True,
                 cwd=str(working_dir)
             )
             print(f"\n{'='*70}")
             print("✅ Build completed successfully")
             print(f"{'='*70}")
-            print("\nTo use this workspace:")
-            print(f"  source {working_dir}/install/setup.bash")
+            setup_ext = self.get_setup_script_extension()
+            print(f"\nTo use this workspace:")
+            print(f"  source {working_dir}/install/setup{setup_ext}")
             print(f"{'='*70}\n")
             return 0
         except subprocess.CalledProcessError as e:
@@ -663,14 +868,29 @@ source install/setup.zsh
         # Check for colcon
         if not shutil.which('colcon'):
             print("❌ colcon not found.")
-            print("Make sure ROS 2 Humble is installed and sourced.")
+            print("Make sure ROS 2 Humble is installed and available in PATH.")
+            print("Install from: https://docs.ros.org/en/humble/Installation/Windows-Install-Binary.html")
             return 1
+        
+        # Check for ROS 2
+        ros_setup = self.find_ros2_setup_script()
+        if not ros_setup or not ros_setup.exists():
+            print(f"❌ ROS 2 setup script not found.")
+            print("   Expected locations:")
+            print("     - C:/opt/ros/humble/setup.bat")
+            print("     - $ROS_HOME/humble/setup.bat")
+            print("\nInstall from: https://docs.ros.org/en/humble/Installation/Windows-Install-Binary.html")
+            return 1
+        
+        print(f"📦 Using ROS 2 setup: {ros_setup}\n")
         
         build_type = "Release" if (args and args.release) else "RelWithDebInfo"
         
         colcon_cmd = [
             'colcon', 'build',
-            '--cmake-args', f'-DCMAKE_BUILD_TYPE={build_type}'
+            '--cmake-args',
+            '-Wno-dev',  # Suppress developer warnings from ROS 2 toolchain
+            f'-DCMAKE_BUILD_TYPE={build_type}'
         ]
         
         if args and args.symlink_install:
@@ -679,14 +899,25 @@ source install/setup.zsh
         if args and args.packages_select:
             colcon_cmd.extend(['--packages-select'] + args.packages_select)
         
+        # Build source command for Windows
+        shell_exe, _ = self.get_shell_executable()
+        commands = [' '.join(f'"{arg}"' if ' ' in arg else arg for arg in colcon_cmd)]
+        cmd_str, _ = self.build_source_command(commands, working_dir)
+        
         try:
             subprocess.run(
-                colcon_cmd,
+                cmd_str,
+                shell=True,
+                executable=shell_exe,
                 check=True,
                 cwd=str(working_dir)
             )
             print(f"\n{'='*70}")
             print("✅ Build completed successfully")
+            print(f"{'='*70}")
+            setup_ext = self.get_setup_script_extension()
+            print(f"\nTo use this workspace:")
+            print(f"  call {working_dir}\\install\\setup{setup_ext}")
             print(f"{'='*70}\n")
             return 0
         except subprocess.CalledProcessError as e:
@@ -714,15 +945,8 @@ source install/setup.zsh
             return False
         
         # Check for platform-specific setup script
-        if self.system == "Darwin":
-            setup_script = self.install_dir / "setup.zsh"
-        elif self.system == "Linux":
-            setup_script = self.install_dir / "setup.bash"
-        elif self.system == "Windows":
-            setup_script = self.install_dir / "setup.bat"
-        else:
-            print(f"❌ Unsupported platform: {self.system}")
-            return False
+        setup_ext = self.get_setup_script_extension()
+        setup_script = self.install_dir / f"setup{setup_ext}"
         
         if not setup_script.exists():
             print(f"\n{'='*70}")
@@ -967,37 +1191,54 @@ source install/setup.zsh
             print(f"   WebSocket URL: ws://localhost:{args.rosbridge_port}\n")
             
             # Build command to launch rosbridge with workspace sourced
-            if self.system == "Darwin":
+            setup_ext = self.get_setup_script_extension()
+            workspace_setup = self.install_dir / f"setup{setup_ext}"
+            
+            if self.is_macos:
                 conda_env, conda_prefix = self.get_conda_env_info()
                 if not conda_env or not conda_prefix:
                     print("❌ Could not detect conda environment for rosbridge.")
                     print("   Please activate your conda environment first:")
                     print("   conda activate ros_env  # or ros_env_test")
                     return 1
-                setup_script = f"{conda_prefix}/setup.zsh"
-                rosbridge_cmd = f"""
-eval "$(conda shell.zsh hook)"
-conda activate {conda_env}
-source {setup_script} 2>/dev/null || true
-source {self.workspace_root}/install/setup.zsh
-ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridge_port}
-"""
+                
+                shell_exe, _ = self.get_shell_executable()
+                ros_setup = self.find_ros2_setup_script()
+                
+                rosbridge_cmd_parts = [
+                    'eval "$(conda shell.zsh hook)"',
+                    f'conda activate {conda_env}',
+                ]
+                
+                if ros_setup and ros_setup.exists():
+                    rosbridge_cmd_parts.append(f'source "{ros_setup}" 2>/dev/null || true')
+                
+                if workspace_setup.exists():
+                    rosbridge_cmd_parts.append(f'source "{workspace_setup}"')
+                
+                rosbridge_cmd_parts.append(
+                    f'ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridge_port}'
+                )
+                
+                rosbridge_cmd = '\n'.join(rosbridge_cmd_parts)
+                
                 rosbridge_process = subprocess.Popen(
                     rosbridge_cmd,
                     shell=True,
-                    executable="/bin/zsh",
+                    executable=shell_exe,
                     cwd=self.workspace_root
                 )
-            elif self.system == "Linux":
-                rosbridge_cmd = f"""
-source /opt/ros/humble/setup.bash
-source {self.workspace_root}/install/setup.bash
-ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridge_port}
-"""
+            elif self.is_linux or self.is_windows:
+                shell_exe, _ = self.get_shell_executable()
+                commands = [
+                    f'ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridge_port}'
+                ]
+                rosbridge_cmd, _ = self.build_source_command(commands, self.workspace_root)
+                
                 rosbridge_process = subprocess.Popen(
                     rosbridge_cmd,
                     shell=True,
-                    executable="/bin/bash",
+                    executable=shell_exe,
                     cwd=self.workspace_root
                 )
             else:
@@ -1112,11 +1353,11 @@ ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridg
             return 1
         
         # Launch based on platform
-        if self.system == "Darwin":
+        if self.is_macos:
             return self.run_macos(args)
-        elif self.system == "Linux":
+        elif self.is_linux:
             return self.run_linux(args)
-        elif self.system == "Windows":
+        elif self.is_windows:
             return self.run_windows(args)
         else:
             print(f"❌ Unsupported platform: {self.system}")
@@ -1135,52 +1376,54 @@ ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:={args.rosbridg
             print("   conda activate ros_env  # or ros_env_test")
             return 1
         
-        setup_script = f"{conda_prefix}/setup.zsh"
-        launch_cmd = f"""
-eval "$(conda shell.zsh hook)"
-conda activate {conda_env}
-source {setup_script} 2>/dev/null || true
-
-# Source workspace - fail if not found
-if [ ! -f "install/setup.zsh" ]; then
-    echo ""
-    echo "======================================================================"
-    echo "❌ ERROR: Workspace setup script not found"
-    echo "======================================================================"
-    echo ""
-    echo "Expected: install/setup.zsh"
-    echo ""
-    echo "Please build the workspace first:"
-    echo "  ./grizzly.py build"
-    echo ""
-    echo "======================================================================"
-    echo ""
-    exit 1
-fi
-
-source install/setup.zsh
-
-echo ""
-echo "================================================"
-echo "  Launching Grizzly Minimal System"
-echo "================================================"
-echo ""
-echo "Workspace sourced: install/setup.zsh"
-echo ""
-echo "Starting nodes:"
-echo "  - system_manager (lifecycle node)"
-echo ""
-echo "Press Ctrl+C to stop all nodes"
-echo ""
-
-ros2 launch grizzly_stack grizzly_minimal.launch.py
-"""
+        setup_ext = self.get_setup_script_extension()
+        workspace_setup = self.install_dir / f"setup{setup_ext}"
+        
+        if not workspace_setup.exists():
+            print(f"\n{'='*70}")
+            print("❌ ERROR: Workspace setup script not found")
+            print(f"{'='*70}")
+            print(f"\nExpected: {workspace_setup}")
+            print("\nPlease build the workspace first:")
+            print("  ./grizzly.py build")
+            print(f"{'='*70}\n")
+            return 1
+        
+        shell_exe, _ = self.get_shell_executable()
+        ros_setup = self.find_ros2_setup_script()
+        
+        launch_cmd_parts = [
+            f'eval "$(conda shell.zsh hook)"',
+            f'conda activate {conda_env}',
+        ]
+        
+        if ros_setup and ros_setup.exists():
+            launch_cmd_parts.append(f'source "{ros_setup}" 2>/dev/null || true')
+        
+        launch_cmd_parts.extend([
+            f'source "{workspace_setup}"',
+            'echo ""',
+            'echo "================================================"',
+            'echo "  Launching Grizzly Minimal System"',
+            'echo "================================================"',
+            'echo ""',
+            f'echo "Workspace sourced: {workspace_setup}"',
+            'echo ""',
+            'echo "Starting nodes:"',
+            'echo "  - system_manager (lifecycle node)"',
+            'echo ""',
+            'echo "Press Ctrl+C to stop all nodes"',
+            'echo ""',
+            'ros2 launch grizzly_stack grizzly_minimal.launch.py'
+        ])
+        
+        launch_cmd = '\n'.join(launch_cmd_parts)
         
         try:
             subprocess.run(
                 launch_cmd,
                 shell=True,
-                executable='/bin/zsh',
+                executable=shell_exe,
                 cwd=str(self.workspace_root),
                 check=True
             )
@@ -1196,52 +1439,42 @@ ros2 launch grizzly_stack grizzly_minimal.launch.py
         """Run on Linux using native ROS 2."""
         print("🐧 Launching on Linux (native ROS 2)...\n")
         
-        ros_setup = Path("/opt/ros/humble/setup.bash")
+        setup_ext = self.get_setup_script_extension()
+        workspace_setup = self.install_dir / f"setup{setup_ext}"
         
-        launch_cmd = f"""
-set -e
-source {ros_setup}
-
-# Source workspace - fail if not found
-if [ ! -f "install/setup.bash" ]; then
-    echo ""
-    echo "======================================================================"
-    echo "❌ ERROR: Workspace setup script not found"
-    echo "======================================================================"
-    echo ""
-    echo "Expected: install/setup.bash"
-    echo ""
-    echo "Please build the workspace first:"
-    echo "  ./grizzly.py build"
-    echo ""
-    echo "======================================================================"
-    echo ""
-    exit 1
-fi
-
-source install/setup.bash
-
-echo ""
-echo "================================================"
-echo "  Launching Grizzly Minimal System"
-echo "================================================"
-echo ""
-echo "Workspace sourced: install/setup.bash"
-echo ""
-echo "Starting nodes:"
-echo "  - system_manager (lifecycle node)"
-echo ""
-echo "Press Ctrl+C to stop all nodes"
-echo ""
-
-ros2 launch grizzly_stack grizzly_minimal.launch.py
-"""
+        if not workspace_setup.exists():
+            print(f"\n{'='*70}")
+            print("❌ ERROR: Workspace setup script not found")
+            print(f"{'='*70}")
+            print(f"\nExpected: {workspace_setup}")
+            print("\nPlease build the workspace first:")
+            print("  ./grizzly.py build")
+            print(f"{'='*70}\n")
+            return 1
+        
+        commands = [
+            'echo ""',
+            'echo "================================================"',
+            'echo "  Launching Grizzly Minimal System"',
+            'echo "================================================"',
+            'echo ""',
+            f'echo "Workspace sourced: {workspace_setup}"',
+            'echo ""',
+            'echo "Starting nodes:"',
+            'echo "  - system_manager (lifecycle node)"',
+            'echo ""',
+            'echo "Press Ctrl+C to stop all nodes"',
+            'echo ""',
+            'ros2 launch grizzly_stack grizzly_minimal.launch.py'
+        ]
+        
+        cmd_str, shell_exe = self.build_source_command(commands, self.workspace_root)
         
         try:
             subprocess.run(
-                launch_cmd,
+                cmd_str,
                 shell=True,
-                executable='/bin/bash',
+                executable=shell_exe,
                 cwd=str(self.workspace_root),
                 check=True
             )
@@ -1257,23 +1490,42 @@ ros2 launch grizzly_stack grizzly_minimal.launch.py
         """Run on Windows using native ROS 2."""
         print("🪟 Launching on Windows (native ROS 2)...\n")
         
-        # Check setup script exists
-        setup_script = self.install_dir / "setup.bat"
-        if not setup_script.exists():
+        setup_ext = self.get_setup_script_extension()
+        workspace_setup = self.install_dir / f"setup{setup_ext}"
+        
+        if not workspace_setup.exists():
             print(f"\n{'='*70}")
             print("❌ ERROR: Workspace setup script not found")
             print(f"{'='*70}")
-            print(f"\nExpected: {setup_script}")
+            print(f"\nExpected: {workspace_setup}")
             print("\nPlease build the workspace first:")
             print("  ./grizzly.py build")
             print(f"{'='*70}\n")
             return 1
         
+        commands = [
+            'echo.',
+            'echo ================================================',
+            'echo   Launching Grizzly Minimal System',
+            'echo ================================================',
+            'echo.',
+            f'echo Workspace sourced: {workspace_setup}',
+            'echo.',
+            'echo Starting nodes:',
+            'echo   - system_manager (lifecycle node)',
+            'echo.',
+            'echo Press Ctrl+C to stop all nodes',
+            'echo.',
+            'ros2 launch grizzly_stack grizzly_minimal.launch.py'
+        ]
+        
+        cmd_str, shell_exe = self.build_source_command(commands, self.workspace_root)
+        
         try:
-            # Source and launch
             subprocess.run(
-                f'call {setup_script} && ros2 launch grizzly_stack grizzly_minimal.launch.py',
+                cmd_str,
                 shell=True,
+                executable=shell_exe,
                 cwd=str(self.workspace_root),
                 check=True
             )
@@ -1314,27 +1566,40 @@ ros2 launch grizzly_stack grizzly_minimal.launch.py
         print("🔧 Sourcing workspace environment...\n")
         env = os.environ.copy()
         
-        # Add workspace to environment
-        if self.system == "Darwin":
+        # Build environment sourcing command
+        setup_ext = self.get_setup_script_extension()
+        workspace_setup = self.install_dir / f"setup{setup_ext}"
+        
+        if self.is_macos:
             conda_env, conda_prefix = self.get_conda_env_info()
             if not conda_env or not conda_prefix:
                 print("❌ Could not detect conda environment for tests.")
                 print("   Please activate your conda environment first:")
                 print("   conda activate ros_env  # or ros_env_test")
                 return 1
-            setup_script = f"{conda_prefix}/setup.zsh"
-            source_cmd = f"""
-eval "$(conda shell.zsh hook)"
-conda activate {conda_env}
-source {setup_script} 2>/dev/null || true
-source install/setup.zsh
-env
-"""
+            
+            shell_exe, _ = self.get_shell_executable()
+            ros_setup = self.find_ros2_setup_script()
+            
+            source_cmd_parts = [
+                'eval "$(conda shell.zsh hook)"',
+                f'conda activate {conda_env}',
+            ]
+            
+            if ros_setup and ros_setup.exists():
+                source_cmd_parts.append(f'source "{ros_setup}" 2>/dev/null || true')
+            
+            if workspace_setup.exists():
+                source_cmd_parts.append(f'source "{workspace_setup}"')
+            
+            source_cmd_parts.append('env')
+            source_cmd = '\n'.join(source_cmd_parts)
+            
             try:
                 result = subprocess.run(
                     source_cmd,
                     shell=True,
-                    executable='/bin/zsh',
+                    executable=shell_exe,
                     cwd=str(self.workspace_root),
                     capture_output=True,
                     text=True,
@@ -1342,24 +1607,47 @@ env
                 )
                 if result.returncode == 0:
                     for line in result.stdout.split('\n'):
-                        if '=' in line:
+                        if '=' in line and not line.strip().startswith('#'):
                             key, _, value = line.partition('=')
                             env[key] = value
             except Exception as e:
                 print(f"⚠️  Warning: Could not source environment: {e}")
         
-        elif self.system == "Linux":
-            ros_setup = Path("/opt/ros/humble/setup.bash")
-            source_cmd = f"""
-source {ros_setup}
-source install/setup.bash
-env
-"""
+        elif self.is_linux or self.is_windows:
+            shell_exe, _ = self.get_shell_executable()
+            source_cmd_parts = []
+            
+            if self.is_linux:
+                source_cmd_parts.append('set +u')  # Allow unset variables during sourcing
+            
+            ros_setup = self.find_ros2_setup_script()
+            if ros_setup and ros_setup.exists():
+                if self.is_windows:
+                    source_cmd_parts.append(f'call "{ros_setup}"')
+                else:
+                    source_cmd_parts.append(f'source "{ros_setup}"')
+            
+            if workspace_setup.exists():
+                if self.is_windows:
+                    source_cmd_parts.append(f'call "{workspace_setup}"')
+                else:
+                    source_cmd_parts.append(f'source "{workspace_setup}"')
+            
+            if self.is_linux:
+                source_cmd_parts.append('set -u')  # Re-enable strict mode
+            
+            source_cmd_parts.append('env')
+            
+            if self.is_windows:
+                source_cmd = ' && '.join(source_cmd_parts)
+            else:
+                source_cmd = ' && '.join(source_cmd_parts)
+            
             try:
                 result = subprocess.run(
                     source_cmd,
                     shell=True,
-                    executable='/bin/bash',
+                    executable=shell_exe,
                     cwd=str(self.workspace_root),
                     capture_output=True,
                     text=True,
@@ -1367,7 +1655,7 @@ env
                 )
                 if result.returncode == 0:
                     for line in result.stdout.split('\n'):
-                        if '=' in line:
+                        if '=' in line and not line.strip().startswith('#') and line.strip():
                             key, _, value = line.partition('=')
                             env[key] = value
             except Exception as e:

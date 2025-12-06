@@ -8,11 +8,15 @@
 # 2. Generate code for custom messages (.msg files)
 # 3. Export dependencies for packages that depend on this one
 
-# Require CMake 3.8 or higher (standard for ROS 2)
-cmake_minimum_required(VERSION 3.8)
+# Require CMake 3.14+ (modern ROS 2 standard, avoids deprecation warnings)
+cmake_minimum_required(VERSION 3.14...3.28)
 
 # Define the project name (must match package.xml)
 project(grizzly_interfaces)
+
+# Suppress FindPythonInterp/FindPythonLibs deprecation warnings from robostack
+# These come from python_cmake_module, not our code
+cmake_policy(SET CMP0148 OLD)
 
 # --- AUTO-DETECT CONDA ENVIRONMENT (macOS) ---
 # Automatically detect and use conda Python paths when CONDA_PREFIX is set
