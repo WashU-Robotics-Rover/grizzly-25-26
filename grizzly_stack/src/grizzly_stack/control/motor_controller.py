@@ -58,7 +58,8 @@ class MotorController(GrizzlyLifecycleNode):
         # Status update every 10 ticks
         if self.tick_count % 10 == 0:
             status = String()
-            status.data = f'vel: linear={self._target_linear:.2f}, angular={self._target_angular:.2f}'
+            # Explicitly convert to string and ensure proper encoding for CycloneDDS
+            status.data = str(f'vel: linear={self._target_linear:.2f}, angular={self._target_angular:.2f}')
             self._status_pub.publish(status)
     
     def _send_stop(self):

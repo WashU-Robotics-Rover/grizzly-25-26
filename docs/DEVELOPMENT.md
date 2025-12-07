@@ -115,6 +115,71 @@ layer_order:            # Startup order (lower = first)
 
 ---
 
+## How the System Works
+
+### Two Types of States
+
+**1. Operational States** (robot-level)
+- `STARTUP` → System just started
+- `STANDBY` → Ready but not operating
+- `AUTONOMOUS` → Self-driving mode
+- `MANUAL` → Human control mode
+- `EMERGENCY` → Stop everything immediately
+- `ERROR` → Something went wrong
+- `SHUTDOWN` → System shutting down
+
+**2. Lifecycle States** (node-level)
+- `Unconfigured` → Node just started
+- `Inactive` → Ready but not running
+- `Active` → Running and doing work
+
+### How Layers Work
+
+Nodes are grouped into **layers** (perception, planning, control). When the robot's operational state changes, entire layers activate or deactivate together.
+
+**Example:**
+```
+Robot goes to AUTONOMOUS mode
+  ↓
+System Manager activates: perception, planning, control layers
+  ↓
+All nodes in those layers become Active
+  ↓
+Robot starts operating
+```
+
+**When layers activate:**
+- `AUTONOMOUS` mode → All layers active
+- `MANUAL` mode → All layers active
+- `STANDBY` mode → No layers active
+- `EMERGENCY` mode → All layers deactivate immediately
+
+### Startup Sequence
+
+1. **Launch file** starts all nodes (they're in `Unconfigured` state)
+2. **Lifecycle Manager** configures nodes → `Inactive` state
+3. **System Manager** activates → `Active` state
+4. **System Manager** transitions to `STANDBY` → layers stay inactive
+5. When you request `AUTONOMOUS` → layers activate automatically
+
+### layers.yaml is the Single Source of Truth
+
+The `layers.yaml` file controls:
+- Which nodes exist
+- Which layer each node belongs to
+- Whether each node is enabled
+- What parameters each node gets
+- Startup order of layers
+
+The launch file reads `layers.yaml` and automatically:
+- Starts all enabled nodes
+- Passes parameters to each node
+- Groups nodes by layer for lifecycle management
+
+**You never need to modify the launch file** - just edit `layers.yaml`!
+
+---
+
 ## GrizzlyLifecycleNode Reference
 
 Override these methods:

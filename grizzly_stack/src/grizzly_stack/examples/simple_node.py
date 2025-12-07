@@ -46,7 +46,8 @@ class SimpleNode(GrizzlyLifecycleNode):
     def tick(self):
         """Main loop - called at rate_hz when active."""
         msg = String()
-        msg.data = f'tick #{self.tick_count}'
+        # Explicitly convert to string and ensure proper encoding for CycloneDDS
+        msg.data = str(f'tick #{self.tick_count}')
         self._pub.publish(msg)
 
 

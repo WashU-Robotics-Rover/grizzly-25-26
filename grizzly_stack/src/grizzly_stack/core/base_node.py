@@ -353,7 +353,8 @@ class GrizzlyLifecycleNode(LifecycleNode):
             return
         
         msg = String()
-        msg.data = f'[{self.get_clock().now().nanoseconds / 1e9:.2f}] {status_text}'
+        # Explicitly convert to string and ensure proper encoding for CycloneDDS
+        msg.data = str(f'[{self.get_clock().now().nanoseconds / 1e9:.2f}] {status_text}')
         self._status_pub.publish(msg)
         
         self.get_logger().debug(f'Status: {status_text}')
