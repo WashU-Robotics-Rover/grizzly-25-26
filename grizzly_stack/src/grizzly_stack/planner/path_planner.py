@@ -74,7 +74,8 @@ class PathPlanner(GrizzlyLifecycleNode):
         self._goal_pub.publish(goal)
         
         status = String()
-        status.data = f'New goal: ({goal.pose.position.x:.1f}, {goal.pose.position.y:.1f})'
+        # Explicitly convert to string and ensure proper encoding for CycloneDDS
+        status.data = str(f'New goal: ({goal.pose.position.x:.1f}, {goal.pose.position.y:.1f})')
         self._status_pub.publish(status)
 
 

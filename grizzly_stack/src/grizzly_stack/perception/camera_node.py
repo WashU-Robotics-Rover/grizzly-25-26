@@ -45,7 +45,8 @@ class CameraNode(GrizzlyLifecycleNode):
         if random.random() > self._threshold:
             self._detections += 1
             msg = String()
-            msg.data = f'Detection #{self._detections}: object at ({random.randint(0,100)}, {random.randint(0,100)})'
+            # Explicitly convert to string and ensure proper encoding for CycloneDDS
+            msg.data = str(f'Detection #{self._detections}: object at ({random.randint(0,100)}, {random.randint(0,100)})')
             self._detection_pub.publish(msg)
             
             if self._detections % 5 == 0:

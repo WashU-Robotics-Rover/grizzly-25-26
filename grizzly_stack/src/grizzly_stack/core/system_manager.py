@@ -123,7 +123,8 @@ class SystemManager(LifecycleNode):
     def _tick(self):
         """Timer callback for periodic health status publishing."""
         msg = String()
-        msg.data = 'System is healthy'
+        # Explicitly convert to string and ensure proper encoding for CycloneDDS
+        msg.data = str('System is healthy')
         self._pub.publish(msg)
         self._publish_state()
         self.get_logger().info('Published health status.')
@@ -131,7 +132,8 @@ class SystemManager(LifecycleNode):
     def _handle_state_change_request(self, request, response):
         """Service callback to handle external state change requests."""
         requested_state = request.requested_state
-        reason = request.reason if request.reason else "No reason provided"
+        # Ensure reason is a valid string (handle None/empty cases)
+        reason = str(request.reason) if request.reason else "No reason provided"
         
         self.get_logger().info(
             f'State change requested: {get_state_name(requested_state)} (reason: {reason})'
@@ -156,7 +158,8 @@ class SystemManager(LifecycleNode):
             
             response.success = True
             response.current_state = self._current_state
-            response.message = (
+            # Explicitly convert to string and ensure proper encoding for CycloneDDS
+            response.message = str(
                 f'State changed from {get_state_name(old_state)} '
                 f'to {get_state_name(requested_state)}'
             )
@@ -165,7 +168,8 @@ class SystemManager(LifecycleNode):
         else:
             response.success = False
             response.current_state = self._current_state
-            response.message = (
+            # Explicitly convert to string and ensure proper encoding for CycloneDDS
+            response.message = str(
                 f'Invalid transition from {get_state_name(self._current_state)} '
                 f'to {get_state_name(requested_state)}'
             )
@@ -190,7 +194,8 @@ class SystemManager(LifecycleNode):
         msg = OperationalState()
         msg.state = self._current_state
         msg.timestamp = self.get_clock().now().to_msg()
-        msg.description = get_state_name(self._current_state)
+        # Explicitly convert to string and ensure proper encoding for CycloneDDS
+        msg.description = str(get_state_name(self._current_state))
         
         self._state_pub.publish(msg)
 

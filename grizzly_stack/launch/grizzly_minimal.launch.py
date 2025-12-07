@@ -12,6 +12,8 @@ from launch.substitutions import PathJoinSubstitution
 import yaml
 from ament_index_python.packages import get_package_share_directory
 import os
+import tempfile
+from pathlib import Path
 
 
 def load_node_config():
@@ -57,6 +59,11 @@ def generate_launch_description():
     ]
     
     # Auto-discover and launch enabled nodes from config
+    # Create temporary YAML files for parameters to match the format used by core.yaml
+    # This ensures parameters are correctly applied (same format that works for system_manager)
+    temp_dir = Path(tempfile.gettempdir()) / 'grizzly_params'
+    temp_dir.mkdir(exist_ok=True)
+    
     for node_name, node_config in nodes_config.items():
         if not node_config.get('enabled', False):
             print(f"ℹ️  {node_name} disabled")
@@ -66,9 +73,22 @@ def generate_launch_description():
         params = node_config.get('params', {})
         
         print(f"✅ Starting {node_name} ({layer} layer)")
+        if params:
+            print(f"   Parameters: {params}")
         
-        # Build parameters list
-        node_params = [{'ros__parameters': params}] if params else []
+        # Build parameters list - create YAML file matching core.yaml format
+        node_params = []
+        if params:
+            # Create temporary YAML file with same structure as core.yaml
+            yaml_file = temp_dir / f'{node_name}_params.yaml'
+            yaml_content = {
+                node_name: {
+                    'ros__parameters': params
+                }
+            }
+            with open(yaml_file, 'w') as f:
+                yaml.dump(yaml_content, f, default_flow_style=False)
+            node_params = [str(yaml_file)]
         
         launch_components.append(LifecycleNode(
             package='grizzly_stack',
